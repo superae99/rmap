@@ -7,8 +7,8 @@
   # Output directory
   publish = "dist"
   
-  # Node version
-  environment = { NODE_VERSION = "18" }
+  # Node version and environment
+  environment = { NODE_VERSION = "18", NODE_ENV = "production" }
 
 # SPA routing - redirect all routes to index.html
 [[redirects]]
@@ -39,14 +39,6 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Environment variables (these will be set in Netlify dashboard)
-# VITE_API_BASE_URL = "https://your-platform-sh-app-url"
-# VITE_KAKAO_API_KEY = "your-kakao-api-key"
-
-# Build context configurations
-[build.environment]
-  NODE_ENV = "production"
-
 # Deploy previews configuration
 [context.deploy-preview]
   command = "npm run build"
@@ -54,7 +46,3 @@
 # Branch deploys configuration  
 [context.branch-deploy]
   command = "npm run build"
-
-# Functions (if needed in the future)
-[functions]
-  directory = "netlify/functions"
