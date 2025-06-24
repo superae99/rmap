@@ -1,8 +1,8 @@
 # Netlify configuration for React client
 
 [build]
-  # Build command
-  command = "npm run build"
+  # Build command - clean install to fix rollup issue
+  command = "rm -rf node_modules package-lock.json && npm install && npm run build"
   
   # Output directory
   publish = "dist"

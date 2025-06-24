@@ -5,6 +5,14 @@ export default defineConfig({
     jsx: 'automatic',
     jsxImportSource: 'react',
   },
+  build: {
+    rollupOptions: {
+      external: [], // Ensure no external dependencies cause issues
+      output: {
+        manualChunks: undefined, // Disable manual chunking to avoid rollup issues
+      },
+    },
+  },
   server: {
     port: 4000,
     host: 'localhost',
