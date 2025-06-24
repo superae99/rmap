@@ -13,7 +13,7 @@ export const config = {
   
   // Application settings
   app: {
-    name: '카카오맵 상권 관리 시스템',
+    name: '영업 상권 정보 시스템',
     version: '1.0.0'
   },
   

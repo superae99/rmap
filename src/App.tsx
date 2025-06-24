@@ -168,7 +168,7 @@ function App() {
           { style: { display: 'flex', alignItems: 'center', gap: '30px' } },
           React.createElement('h1',
             { style: { margin: 0, color: 'white', fontSize: '20px' } },
-            '🗺️ 영업 상권 관리 시스템'
+            '🗺️ 영업 상권 정보 시스템'
           ),
           React.createElement('div',
             { style: { display: 'flex', gap: '20px' } },
