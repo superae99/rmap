@@ -37,8 +37,8 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     const { config } = await import('../config/environment')
     const baseUrl = config.apiBaseUrl
     
-    // sales_territories와 조인된 데이터를 위해 with-territory 엔드포인트 사용
-    const url = `${baseUrl}/areas/with-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    // sales_territories와 조인된 데이터를 위해 with-sales-territory 엔드포인트 사용
+    const url = `${baseUrl}/areas/with-sales-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     console.log('🔍 API 호출:', url)
     console.log('🔍 Base URL:', baseUrl)
     
