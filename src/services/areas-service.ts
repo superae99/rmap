@@ -38,7 +38,7 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     const baseUrl = config.apiBaseUrl
     
     // 메모리 문제 해결을 위해 기본 areas 엔드포인트 사용 (페이징 제거됨)
-    const url = `${baseUrl}/api/areas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const url = `${baseUrl}/areas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     console.log('🔍 API 호출:', url)
     console.log('🔍 Base URL:', baseUrl)
     
