@@ -66,21 +66,25 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     const processedAreas: ProcessedArea[] = areasData
       .filter((area: any) => area.coordinates)
       .map((area: any) => {
-        // 좌표 데이터 파싱 (Area 모델의 {lat, lng} 형식 처리)
+        // GeoJSON 좌표 데이터 파싱
         let coordinates: number[][] = []
         try {
           const coordsData = typeof area.coordinates === 'string' 
             ? JSON.parse(area.coordinates) 
             : area.coordinates
             
-          // {lat, lng} 형식을 [lng, lat] 배열로 변환 (KakaoMap 형식)
           if (Array.isArray(coordsData) && coordsData.length > 0) {
-            if (typeof coordsData[0] === 'object' && 'lat' in coordsData[0] && 'lng' in coordsData[0]) {
-              // {lat, lng} 형식을 [lng, lat]로 변환
-              coordinates = coordsData.map((coord: any) => [coord.lng, coord.lat])
-            } else {
-              // 이미 배열 형식 (순서 확인 필요)
+            // GeoJSON Polygon: [[[lng, lat], ...]] 형태인 경우 첫 번째 ring 사용
+            if (Array.isArray(coordsData[0]) && Array.isArray(coordsData[0][0])) {
+              coordinates = coordsData[0] // 외부 ring만 사용
+            }
+            // GeoJSON LineString 또는 단순 배열: [[lng, lat], ...] 형태
+            else if (Array.isArray(coordsData[0]) && typeof coordsData[0][0] === 'number') {
               coordinates = coordsData
+            }
+            // 레거시 {lat, lng} 객체 형식 지원
+            else if (typeof coordsData[0] === 'object' && 'lat' in coordsData[0] && 'lng' in coordsData[0]) {
+              coordinates = coordsData.map((coord: any) => [coord.lng, coord.lat])
             }
           }
         } catch (error) {
