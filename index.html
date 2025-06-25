@@ -6,6 +6,94 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://dapi.kakao.com https://t1.daumcdn.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://dapi.kakao.com https://www.main-bvxea6i-fru7lrwunilmo.au.platformsh.site; img-src 'self' data: https:; font-src 'self' https:;" />
       <title>영업 상권 정보 시스템</title>
+      <style>
+        /* 모바일 대응 기본 CSS */
+        * {
+          box-sizing: border-box;
+        }
+        
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        @media (max-width: 768px) {
+          /* 모바일에서 텍스트 크기 조정 */
+          html {
+            font-size: 14px;
+          }
+          
+          /* 버튼들 터치 친화적으로 */
+          button {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          /* 입력 필드 크기 조정 */
+          input, select {
+            min-height: 44px;
+            font-size: 16px; /* iOS 줌 방지 */
+          }
+          
+          /* 테이블 가로 스크롤 */
+          table {
+            width: 100%;
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
+          }
+          
+          /* 컨테이너 패딩 조정 */
+          .container {
+            padding: 10px !important;
+          }
+          
+          /* 그리드 레이아웃 모바일 대응 */
+          .grid-container {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+          
+          /* 카드 여백 조정 */
+          .card {
+            margin-bottom: 10px !important;
+            padding: 15px !important;
+          }
+          
+          /* 네비게이션 조정 */
+          nav {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          
+          /* 모달 크기 조정 */
+          .modal {
+            width: 95% !important;
+            max-width: none !important;
+            margin: 10px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          /* 작은 모바일 화면 추가 조정 */
+          html {
+            font-size: 13px;
+          }
+          
+          h1 {
+            font-size: 1.5rem !important;
+          }
+          
+          h2 {
+            font-size: 1.3rem !important;
+          }
+          
+          h3 {
+            font-size: 1.1rem !important;
+          }
+        }
+      </style>
       <!-- 카카오맵 API는 main.tsx에서 동적으로 로드됩니다 -->
     </head>
     <body>

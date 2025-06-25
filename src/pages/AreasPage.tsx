@@ -534,7 +534,19 @@ const AreasPage = () => {
         } 
       },
       React.createElement('div', 
-        { style: { display: 'flex', alignItems: 'end', gap: '12px', marginBottom: '15px', width: '100%' } },
+        { 
+          style: { 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: '12px', 
+            marginBottom: '15px', 
+            width: '100%',
+            '@media (max-width: 768px)': {
+              gridTemplateColumns: '1fr'
+            }
+          },
+          className: 'grid-container'
+        },
         
         // 검색어 입력
         React.createElement('div', { style: { flex: '1', minWidth: '120px' } },

@@ -636,9 +636,25 @@ const HomePage = () => {
           borderBottom: '1px solid #ddd',
           backgroundColor: 'white'
         } },
-        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-          React.createElement('h1', { style: { margin: 0, fontSize: '24px' } }, '🗺️ 영업 상권 지도'),
-          React.createElement('div', { style: { display: 'flex', gap: '10px' } },
+        React.createElement('div', { 
+          style: { 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'
+          } 
+        },
+          React.createElement('h1', { 
+            style: { 
+              margin: 0, 
+              fontSize: '24px',
+              '@media (max-width: 768px)': {
+                fontSize: '20px'
+              }
+            } 
+          }, '🗺️ 영업 상권 지도'),
+          React.createElement('div', { style: { display: 'flex', gap: '10px', flexWrap: 'wrap' } },
             React.createElement('button', 
               { 
                 style: { 
