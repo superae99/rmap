@@ -4,7 +4,7 @@ export const config = {
   // API Base URL - will be different for each environment
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001',
   
-  // Kakao Map API Key
+  // Kakao Map API Key (deprecated - now handled by server)
   kakaoApiKey: import.meta.env.VITE_KAKAO_API_KEY || '',
   
   // Environment
@@ -25,10 +25,6 @@ export const config = {
 }
 
 // Validate required environment variables
-if (config.isProduction && !config.kakaoApiKey) {
-  console.error('VITE_KAKAO_API_KEY is required in production')
-}
-
 if (config.isProduction && !config.apiBaseUrl) {
   console.error('VITE_API_BASE_URL is required in production')
 }

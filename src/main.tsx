@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { config } from './config/environment'
 
-// 카카오맵 API 동적 로드
+// 카카오맵 API 동적 로드 (서버에서 제공하는 안전한 스크립트 사용)
 const loadKakaoMapScript = () => {
   return new Promise((resolve, reject) => {
     if (window.kakao && window.kakao.maps) {
@@ -11,14 +11,21 @@ const loadKakaoMapScript = () => {
       return
     }
 
-    const script = document.createElement('script')
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${config.kakaoApiKey}&libraries=services,clusterer,drawing&autoload=false`
-    script.onload = () => {
+    // 서버에서 카카오맵 스크립트 로드를 위한 콜백 설정
+    window.kakaoMapLoadCallback = () => {
       window.kakao.maps.load(() => {
         resolve(window.kakao)
       })
     }
-    script.onerror = () => reject(new Error('카카오맵 API 로드 실패'))
+    
+    window.kakaoMapErrorCallback = () => {
+      reject(new Error('카카오맵 API 로드 실패'))
+    }
+
+    // 서버에서 제공하는 카카오맵 스크립트 로드
+    const script = document.createElement('script')
+    script.src = `${config.apiBaseUrl}/kakao/script`
+    script.onerror = () => reject(new Error('서버에서 카카오맵 스크립트를 가져올 수 없습니다'))
     document.head.appendChild(script)
   })
 }
