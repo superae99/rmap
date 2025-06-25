@@ -21,7 +21,6 @@ const loadKakaoMapScript = async () => {
       const { scriptUrl } = await response.json()
 
       // 카카오맵 스크립트 로드
-      console.log('Loading Kakao Maps script from:', scriptUrl)
       const script = document.createElement('script')
       script.src = scriptUrl
       script.async = true
