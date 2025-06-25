@@ -33,9 +33,14 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
       })
     }
     
+    // API 기본 URL 가져오기
+    const { config } = await import('../config/environment')
+    const baseUrl = config.apiBaseUrl
+    
     // 메모리 문제 해결을 위해 기본 areas 엔드포인트 사용 (페이징 제거됨)
-    const url = `/api/areas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const url = `${baseUrl}/api/areas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     console.log('🔍 API 호출:', url)
+    console.log('🔍 Base URL:', baseUrl)
     
     // 헤더에 인증 토큰 추가 (있는 경우)
     const headers: HeadersInit = {}
