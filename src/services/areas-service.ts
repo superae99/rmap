@@ -33,8 +33,8 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
       })
     }
     
-    // sales territory 정보가 포함된 엔드포인트 사용
-    const url = `/api/areas/with-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    // 메모리 문제 해결을 위해 기본 areas 엔드포인트 사용 (페이징 제거됨)
+    const url = `/api/areas${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     console.log('🔍 API 호출:', url)
     
     // 헤더에 인증 토큰 추가 (있는 경우)
@@ -51,8 +51,8 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     
     const responseData = await response.json()
     
-    // with-territory 엔드포인트는 배열을 직접 반환
-    const areasData = Array.isArray(responseData) ? responseData : responseData.areas || responseData
+    // 페이징된 응답 처리
+    const areasData = responseData.areas || responseData
     console.log(`✅ ${areasData.length}개 영역 로드 완료 (전체: ${responseData.total || areasData.length}개)`)
     
     // 디버깅: 서버에서 받은 원본 데이터 확인
