@@ -21,15 +21,25 @@ const loadKakaoMapScript = async () => {
       const { scriptUrl } = await response.json()
 
       // 카카오맵 스크립트 로드
+      console.log('Loading Kakao Maps script from:', scriptUrl)
       const script = document.createElement('script')
       script.src = scriptUrl
       script.async = true
       script.onload = () => {
-        window.kakao.maps.load(() => {
-          resolve(window.kakao)
-        })
+        console.log('Kakao script loaded successfully')
+        if (window.kakao && window.kakao.maps) {
+          window.kakao.maps.load(() => {
+            console.log('Kakao maps initialized successfully')
+            resolve(window.kakao)
+          })
+        } else {
+          reject(new Error('카카오 객체를 찾을 수 없습니다'))
+        }
       }
-      script.onerror = () => reject(new Error('카카오맵 API 로드 실패'))
+      script.onerror = (error) => {
+        console.error('Script loading error:', error)
+        reject(new Error('카카오맵 API 로드 실패'))
+      }
       document.head.appendChild(script)
     } catch (error) {
       reject(error)
