@@ -3,7 +3,5 @@
 declare global {
   interface Window {
     kakao: any
-    kakaoMapLoadCallback?: () => void
-    kakaoMapErrorCallback?: () => void
   }
 }
