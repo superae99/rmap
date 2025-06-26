@@ -364,6 +364,15 @@ const PartnersPage = () => {
           }).length : 0
         }`
       ),
+      React.createElement('div', { key: 'managers-sample', style: { fontSize: '12px', color: '#888', marginTop: '5px' } }, 
+        `담당자 샘플 (처음 2명): ${
+          options && options.managers.length > 0 
+            ? options.managers.slice(0, 2).map(m => 
+                `${m.employeeName}(${m.branchName}/${m.officeName})`
+              ).join(', ')
+            : '없음'
+        }`
+      ),
     ]),
 
     // FilterPanel 사용 (지사/지점/담당자 필터링) - 다른 페이지와 동일한 방식
