@@ -244,6 +244,7 @@ const HomePage = () => {
         longitude: lng,
         title: partner.partnerName,
         markerColor: managerColor,
+        rtmChannel: rtmChannel,
       content: `
         <div style="
           min-width: 280px;
@@ -396,7 +397,6 @@ const HomePage = () => {
           </div>
         </div>
       `,
-        rtmChannel: rtmChannel,
         type: 'partner' as const,
         data: partner
       }
