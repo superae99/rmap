@@ -36,28 +36,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     ? options.offices.filter(office => office.branchName === filters.branchFilter)
     : options.offices
 
-  // 선택된 지사/지점에 따른 담당자 필터링
-  const filteredManagers = options.managers.filter(manager => {
-    // 지사 필터 확인
-    if (filters.branchFilter && manager.branchName !== filters.branchFilter) {
-      return false
-    }
-    // 지점 필터 확인
-    if (filters.officeFilter && manager.officeName !== filters.officeFilter) {
-      return false
-    }
-    return true
-  })
-
-  // 디버깅 로그
-  console.log('🔍 FilterPanel 렌더링')
-  console.log('선택된 지사:', filters.branchFilter)
-  console.log('선택된 지점:', filters.officeFilter)
-  console.log('전체 담당자 수:', options.managers.length)
-  console.log('필터링된 담당자 수:', filteredManagers.length)
-  if (filteredManagers.length <= 10) {
-    console.log('필터링된 담당자들:', filteredManagers.map(m => `${m.employeeName}(${m.branchName}-${m.officeName})`))
-  }
 
   // 지사 변경 시 지점과 담당자 필터 초기화
   const handleBranchChange = (value: string) => {
@@ -137,11 +115,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
               onChange={(e) => onFilterChange('managerFilter', e.target.value || null)}
             >
               <option value="">전체</option>
-              {filteredManagers.map(manager => (
-                <option key={manager.employeeId} value={manager.employeeId}>
-                  {manager.employeeName} ({manager.officeName})
-                </option>
-              ))}
+              {options.managers
+                .filter(manager => {
+                  // 실시간 필터링 - 변수에 의존하지 않고 직접 계산
+                  if (filters.branchFilter && manager.branchName !== filters.branchFilter) return false
+                  if (filters.officeFilter && manager.officeName !== filters.officeFilter) return false
+                  return true
+                })
+                .map(manager => (
+                  <option key={manager.employeeId} value={manager.employeeId}>
+                    {manager.employeeName} ({manager.officeName})
+                  </option>
+                ))
+              }
             </select>
           </div>
         )}
