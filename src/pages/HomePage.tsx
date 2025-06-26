@@ -340,51 +340,29 @@ const HomePage = () => {
         )
       ),
 
-      // RTM 채널 필터
+      // RTM 채널 필터 (단순 테스트)
       React.createElement('div', 
-        { style: { backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px' } },
-        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '📍 마커 채널 필터'),
-        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, 
-          // 업소 체크박스
-          React.createElement('label',
-            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['업소'],
-              onChange: () => toggleRtmChannel('업소')
-            }),
-            '⬜ 업소 (네모)'
-          ),
-          // 매장 체크박스
-          React.createElement('label',
-            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['매장'],
-              onChange: () => toggleRtmChannel('매장')
-            }),
-            '⭕ 매장 (동그라미)'
-          ),
-          // 스피리츠 체크박스
-          React.createElement('label',
-            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['스피리츠'],
-              onChange: () => toggleRtmChannel('스피리츠')
-            }),
-            '♦️ 스피리츠 (다이아몬드)'
-          ),
-          // KA 체크박스
-          React.createElement('label',
-            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['KA'],
-              onChange: () => toggleRtmChannel('KA')
-            }),
-            '🔺 KA (삼각형)'
-          )
+        { 
+          style: { 
+            backgroundColor: 'white', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            marginBottom: '20px',
+            border: '2px solid red' // 디버깅용 빨간 테두리
+          } 
+        },
+        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px', color: 'red' } }, '📍 마커 채널 필터 (테스트)'),
+        React.createElement('div', null, '테스트 텍스트 - 이게 보이나요?'),
+        React.createElement('label', null,
+          React.createElement('input', {
+            type: 'checkbox',
+            checked: rtmChannelFilters['업소'],
+            onChange: () => {
+              console.log('✅ 업소 체크박스 클릭됨!')
+              toggleRtmChannel('업소')
+            }
+          }),
+          ' 업소 테스트'
         )
       ),
 
