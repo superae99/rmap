@@ -164,8 +164,10 @@ const HomePage = () => {
 
   // 거래처 및 영역 데이터 수동 조회 함수
   const fetchData = async () => {
+    console.log('🚀 fetchData 함수 시작됨')
     try {
       setLoading(true)
+      console.log('📥 데이터 로딩 시작')
       
       // 거래처와 영역 데이터를 병렬로 로드
       const [partnersResponse] = await Promise.all([
