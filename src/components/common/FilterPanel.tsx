@@ -18,7 +18,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onSearch,
   loading = false
 }) => {
+  console.log('🎛️ FilterPanel 렌더링, loading:', loading, 'options:', !!options)
+  
   if (loading || !options) {
+    console.log('⏳ FilterPanel 로딩 중 또는 옵션 없음')
     return (
       <div className="filter-panel">
         <div className="filter-loading">필터 옵션 로딩 중...</div>
@@ -134,7 +137,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="search-button-container">
         <button 
           className="search-btn" 
-          onClick={onSearch}
+          onClick={() => {
+            console.log('🔍 거래처 조회 버튼 클릭됨, loading:', loading)
+            onSearch()
+          }}
           disabled={loading}
         >
           {loading ? '조회 중...' : '🔍 거래처 조회'}

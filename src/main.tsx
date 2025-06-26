@@ -50,6 +50,7 @@ const loadKakaoMapScript = async () => {
 // 카카오맵 API 로드 후 React 앱 렌더링
 loadKakaoMapScript()
   .then(() => {
+    console.log('✅ 카카오맵 API 로드 성공, React 앱 렌더링 시작')
     ReactDOM.createRoot(document.getElementById('root')!).render(
       <React.StrictMode>
         <App />
@@ -58,6 +59,7 @@ loadKakaoMapScript()
   })
   .catch((error) => {
     console.error('카카오맵 API 로드 실패:', error)
+    console.log('⚠️ 카카오맵 API 실패했지만 React 앱 렌더링 시작')
     // API 로드 실패해도 앱은 렌더링
     ReactDOM.createRoot(document.getElementById('root')!).render(
       <React.StrictMode>

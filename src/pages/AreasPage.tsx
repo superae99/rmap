@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { areaAPI, authAPI, partnerAPI } from '../services/api'
 import KakaoMap from '../components/map/KakaoMap'
 import { loadAreasData } from '../services/areas-service'
+import { useFilters } from '../hooks/useFilters'
+import FilterPanel from '../components/common/FilterPanel'
 import type { FilterOptions } from '../types/filter.types'
 import type { Partner } from '../types/partner.types'
 
@@ -66,52 +68,41 @@ const AreasPage = () => {
   const [mapAreas, setMapAreas] = useState<any[]>([])
   const [showMapView, setShowMapView] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
-  const [selectedBranch, setSelectedBranch] = useState('')
-  const [selectedOffice, setSelectedOffice] = useState('')
-  const [selectedManager, setSelectedManager] = useState('')
   const [allPartners, setAllPartners] = useState<Partner[]>([])
   const [hasSearched, setHasSearched] = useState(false)
-  const [filterLoading, setFilterLoading] = useState(true)
+  const [partnersLoading, setPartnersLoading] = useState(true)
+  
+  // useFilters 훅 사용 (홈화면과 동일)
+  const { options, filters, updateFilter, resetFilters, loading: filterLoading } = useFilters()
 
-  // 사용자 정보와 필터 옵션을 순차적으로 로드 (데이터보다 우선)
+  // 사용자 정보 로드 (필터 옵션은 useFilters 훅에서 자동 처리)
   useEffect(() => {
-    const loadUserAndFilters = async () => {
+    const loadUser = async () => {
       try {
-        setFilterLoading(true)
         const token = localStorage.getItem('token')
         if (!token) {
           console.log('토큰이 없습니다.')
-          setFilterLoading(false)
           return
         }
 
-        // 1단계: 사용자 정보 먼저 로드
         console.log('🔄 사용자 정보 로딩 중...')
         const userData = await authAPI.getProfile()
         setUser(userData)
         console.log('✅ 사용자 정보 로드 완료:', userData)
-
-        // 2단계: 필터 옵션 로드 (사용자 정보 기반)
-        console.log('🔄 필터 옵션 로딩 중...')
-        const options = await partnerAPI.getFilterOptions()
-        setFilterOptions(options)
-        console.log('✅ 필터 옵션 로드 완료:', options)
         
       } catch (error) {
-        console.error('사용자 정보 또는 필터 옵션 로드 실패:', error)
-      } finally {
-        setFilterLoading(false)
+        console.error('사용자 정보 로드 실패:', error)
       }
     }
 
-    loadUserAndFilters()
+    loadUser()
   }, [])
 
   // 모든 거래처 데이터 로드
   useEffect(() => {
     const loadAllPartners = async () => {
       try {
+        setPartnersLoading(true)
         console.log('📍 모든 거래처 데이터 로딩 중...')
         const partnersResponse = await partnerAPI.getPartners({ 
           limit: 100000 // 모든 거래처 로드
@@ -132,29 +123,44 @@ const AreasPage = () => {
       } catch (error) {
         console.error('거래처 데이터 로드 실패:', error)
         setAllPartners([])
+      } finally {
+        setPartnersLoading(false)
       }
     }
 
     loadAllPartners()
   }, [])
 
+  // 로딩 상태 메시지 컴포넌트
+  const [loadingMessage, setLoadingMessage] = useState('')
+  const [queryLoading, setQueryLoading] = useState(false) // 조회 중 상태
+
   // 상권 데이터 가져오기 (조회 버튼용)
   const fetchAreas = async () => {
+    if (partnersLoading) {
+      setLoadingMessage('거래처 데이터를 로딩 중입니다. 잠시만 기다려주세요...')
+      setTimeout(() => setLoadingMessage(''), 3000)
+      return
+    }
+    
+    if (filterLoading) {
+      setLoadingMessage('필터 옵션을 로딩 중입니다. 잠시만 기다려주세요...')
+      setTimeout(() => setLoadingMessage(''), 3000)
+      return
+    }
+    
     if (allPartners.length === 0) {
-      alert('거래처 데이터가 아직 로드되지 않았습니다. 잠시 후 다시 시도해주세요.')
+      setLoadingMessage('거래처 데이터를 불러올 수 없습니다. 페이지를 새로고침해주세요.')
+      setTimeout(() => setLoadingMessage(''), 5000)
       return
     }
 
     try {
       setLoading(true)
+      setQueryLoading(true)
       console.log('🔍 필터링된 상권 데이터 조회 시작...')
       // areas-service를 사용하여 salesTerritory 정보 포함된 데이터 로드
       const token = localStorage.getItem('token')
-      const filters: any = {}
-      
-      if (selectedBranch) filters.branchFilter = selectedBranch
-      if (selectedOffice) filters.officeFilter = selectedOffice
-      if (selectedManager) filters.managerFilter = selectedManager
       
       const areasData = await loadAreasData(filters, token || undefined)
       
@@ -162,24 +168,14 @@ const AreasPage = () => {
       const filteredRegions = new Set()
       const managersByRegion = new Map()
       
-      console.log('🔍 모든 상권 데이터 분석 시작...')
-      areasData.forEach((area, index) => {
-        // 모든 상권의 salesTerritory 정보 로깅 (처음 10개만)
-        if (index < 10) {
-          console.log(`상권 ${index + 1}: ${area.name}`, {
-            sido: area.salesTerritory?.sido,
-            gungu: area.salesTerritory?.gungu,
-            managerName: area.salesTerritory?.managerName
-          })
-        }
-        
+      // 상권 데이터 분석 (로깅 최소화)
+      areasData.forEach((area) => {
         if (area.salesTerritory?.sido && area.salesTerritory?.gungu) {
           const regionKey = `${area.salesTerritory.sido}_${area.salesTerritory.gungu}`
           filteredRegions.add(regionKey)
           
-          // 해당 지역의 담당자 정보 저장 (실제 담당자가 있는 경우만)
+          // 실제 담당자가 있는 경우만 저장
           if (area.salesTerritory.managerName && !area.salesTerritory.managerName.includes('관리 구역 담당 없음')) {
-            console.log(`✅ 담당자 정보 저장: ${regionKey} -> ${area.salesTerritory.managerName}`)
             managersByRegion.set(regionKey, {
               managerName: area.salesTerritory.managerName,
               branchName: area.salesTerritory.branchName,
@@ -187,11 +183,6 @@ const AreasPage = () => {
             })
           }
         }
-      })
-      
-      console.log('💡 수집된 지역 정보:', {
-        filteredRegions: Array.from(filteredRegions),
-        managersByRegion: Array.from(managersByRegion.entries())
       })
 
       // 각 상권에 포함되는 거래처들 찾기
@@ -216,7 +207,13 @@ const AreasPage = () => {
           return []
         }
 
-        const partnersInArea = allPartners.filter(partner => {
+        // 성능 최적화: 거래처 수가 많을 경우 샘플링으로 속도 향상
+        const shouldSample = allPartners.length > 5000
+        const partnersToCheck = shouldSample ? 
+          allPartners.filter((_, index) => index % 5 === 0) : // 5개 중 1개만 샘플링
+          allPartners
+
+        const partnersInArea = partnersToCheck.filter(partner => {
           const lat = Number(partner.latitude)
           const lng = Number(partner.longitude)
           
@@ -229,8 +226,15 @@ const AreasPage = () => {
           }
         })
 
-        console.log(`🗺️ 상권 "${area.name}": ${partnersInArea.length}개 거래처 발견`)
-        return partnersInArea
+        // 샘플링한 경우 추정치 계산
+        const estimatedCount = shouldSample ? partnersInArea.length * 5 : partnersInArea.length
+        return shouldSample ? 
+          allPartners.filter(partner => {
+            const lat = Number(partner.latitude)
+            const lng = Number(partner.longitude)
+            return lat && lng && isPointInPolygon([lng, lat], polygon)
+          }).slice(0, Math.min(100, estimatedCount)) : // 최대 100개로 제한
+          partnersInArea
       }
 
       // 지도용 데이터 변환
@@ -370,6 +374,7 @@ const AreasPage = () => {
       setMapAreas([])
     } finally {
       setLoading(false)
+      setQueryLoading(false)
     }
     setHasSearched(true)
   }
@@ -407,23 +412,7 @@ const AreasPage = () => {
 
   // 필터 변경 시에는 자동 재로드하지 않음 (조회 버튼으로만 조회)
 
-  // 필터 변경 핸들러
-  const handleFilterChange = (setter: (value: string) => void, value: string) => {
-    setter(value)
-  }
-
-  // 지사 변경 시 지점과 담당자 필터 초기화
-  const handleBranchChange = (value: string) => {
-    setSelectedBranch(value)
-    setSelectedOffice('')
-    setSelectedManager('')
-  }
-
-  // 지점 변경 시 담당자 필터 초기화
-  const handleOfficeChange = (value: string) => {
-    setSelectedOffice(value)
-    setSelectedManager('')
-  }
+  // 필터 변경은 useFilters 훅에서 자동 처리됨
 
   // 검색 필터링
   const filteredAreas = areas.filter(area =>
@@ -573,21 +562,66 @@ const AreasPage = () => {
           })
         ),
 
-        // 지사 필터 (시스템관리자 + 일반관리자)
-        user && (
-          user.account === 'admin' || 
-          user.jobTitle?.includes('시스템관리자') ||
-          user.position?.includes('본부장') || 
-          user.position?.includes('부문장') || 
-          user.position?.includes('팀장') || 
-          user.position?.includes('매니저') ||
-          user.jobTitle?.includes('본부장') || 
-          user.jobTitle?.includes('부문장') || 
-          user.jobTitle?.includes('팀장') || 
-          user.jobTitle?.includes('매니저') ||
-          user.fieldType === '스탭' ||
-          user.fieldType === 'STAFF'
-        ) && React.createElement('div', { style: { flex: '1', minWidth: '140px' } },
+        // FilterPanel 사용 (홈화면과 동일)
+        React.createElement(FilterPanel, {
+          options,
+          filters,
+          onFilterChange: updateFilter,
+          onReset: resetFilters,
+          onSearch: fetchAreas,
+          loading: partnersLoading || filterLoading || queryLoading
+        }),
+
+        // 로딩 메시지 표시
+        loadingMessage && React.createElement('div',
+          { style: { 
+            backgroundColor: '#fff3cd', 
+            color: '#856404', 
+            padding: '10px 15px', 
+            borderRadius: '4px',
+            border: '1px solid #ffeaa7',
+            marginTop: '10px',
+            fontSize: '14px'
+          } },
+          loadingMessage
+        )
+      ),
+
+      // 통계 정보
+      React.createElement('div',
+        { style: { 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '15px',
+          marginBottom: '20px'
+        } },
+        React.createElement('div',
+          { style: { 
+            backgroundColor: 'white', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            border: '1px solid #ddd'
+          } },
+          React.createElement('h4', { style: { margin: '0 0 8px 0', color: '#333' } }, '📊 조회 결과'),
+          React.createElement('div', { style: { fontSize: '24px', fontWeight: 'bold', color: '#667eea' } }, 
+            `${filteredAreas.length}개 상권`
+          )
+        ),
+        React.createElement('div',
+          { style: { 
+            backgroundColor: 'white', 
+            padding: '15px', 
+            borderRadius: '8px', 
+            border: '1px solid #ddd'
+          } },
+          React.createElement('h4', { style: { margin: '0 0 8px 0', color: '#333' } }, '🏢 거래처 수'),
+          React.createElement('div', { style: { fontSize: '24px', fontWeight: 'bold', color: '#28a745' } }, 
+            `${allPartners.length}개`
+          )
+        )
+      ),
+
+      // 상권 목록 표시
           React.createElement('label', 
             { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
             '지사'
@@ -719,21 +753,23 @@ const AreasPage = () => {
           ),
           React.createElement('button', {
             onClick: fetchAreas,
-            disabled: loading || filterLoading,
+            disabled: loading || filterLoading || partnersLoading,
             style: {
               width: '100%',
               padding: '8px 10px',
-              backgroundColor: (loading || filterLoading) ? '#ccc' : '#667eea',
+              backgroundColor: (loading || filterLoading || partnersLoading) ? '#ccc' : '#667eea',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
               fontSize: '14px',
               fontWeight: 'bold',
               height: '38px',
-              cursor: (loading || filterLoading) ? 'not-allowed' : 'pointer',
+              cursor: (loading || filterLoading || partnersLoading) ? 'not-allowed' : 'pointer',
               boxSizing: 'border-box'
             }
-          }, (loading || filterLoading) ? (filterLoading ? '필터 로딩 중...' : '조회 중...') : '🔍 조회')
+          }, (loading || filterLoading || partnersLoading) ? 
+            (partnersLoading ? '거래처 로딩 중...' : filterLoading ? '필터 로딩 중...' : '조회 중...') : 
+            '🔍 조회')
         )
       ),
 

@@ -11,6 +11,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('home');
   const [user, setUser] = useState<any>(null);
+  
+  console.log('🚀 App.tsx 컴포넌트 시작, loading:', loading, 'isAuthenticated:', isAuthenticated)
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
@@ -136,6 +138,7 @@ function App() {
   };
 
   if (loading) {
+    console.log('⏳ App.tsx - 로딩 중 상태')
     return React.createElement('div', {
       style: {
         display: 'flex',
@@ -148,8 +151,11 @@ function App() {
 
   // 인증 상태만으로 페이지 결정 (URL 경로 무시)
   if (!isAuthenticated) {
+    console.log('🔐 App.tsx - 인증되지 않음, LoginPage 렌더링')
     return React.createElement(LoginPage);
   }
+  
+  console.log('✅ App.tsx - 인증 완료, isAuthenticated:', isAuthenticated, 'loading:', loading)
   
   console.log('🎯 App.tsx - isMobile:', isMobile);
 
@@ -277,18 +283,27 @@ function App() {
 
   // 페이지 렌더링
   const renderCurrentPage = () => {
+    console.log('🎯 App.tsx - renderCurrentPage 호출, currentPage:', currentPage)
+    console.log('🎯 App.tsx - HomePage 컴포넌트 생성 시도')
     switch (currentPage) {
       case 'partners':
+        console.log('📄 PartnersPage 렌더링')
         return React.createElement(PartnersPage);
       case 'areas':
+        console.log('🗺️ AreasPage 렌더링')
         return React.createElement(AreasPage);
       default:
-        return React.createElement(HomePage);
+        console.log('🏠 HomePage 렌더링 (기본값)')
+        const homePageElement = React.createElement(HomePage);
+        console.log('🏠 HomePage React 엘리먼트 생성됨:', homePageElement)
+        return homePageElement;
     }
   };
 
   // 모바일인 경우 다른 레이아웃 사용
+  console.log('📍 App.tsx 레이아웃 분기점, isMobile:', isMobile)
   if (isMobile) {
+    console.log('📱 모바일 레이아웃 렌더링 시작')
     return React.createElement('div',
       { style: { minHeight: '100vh', backgroundColor: '#f5f5f5', position: 'relative' } },
       React.createElement(MobileNavigation, {
@@ -427,6 +442,7 @@ function App() {
   }
 
   // 데스크톱 레이아웃
+  console.log('🖥️ 데스크톱 레이아웃 렌더링 시작')
   return React.createElement('div',
     { style: { minHeight: '100vh', backgroundColor: '#f5f5f5' } },
     renderNavigation(),

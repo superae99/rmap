@@ -32,9 +32,14 @@ interface Area {
 }
 
 const HomePage = () => {
+  console.log('🏠 HomePage 컴포넌트 렌더링됨')
+  console.log('🏠 HomePage - React.createElement 방식으로 렌더링 중')
   const [partners, setPartners] = useState<Partner[]>([])
   const [areas, setAreas] = useState<ProcessedArea[]>([])
   const [loading, setLoading] = useState(false)
+  
+  // 디버깅: loading 상태 확인
+  console.log('현재 loading 상태:', loading)
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
   const [showAreas, setShowAreas] = useState(true)
   const [showManagerChangeModal, setShowManagerChangeModal] = useState(false)
@@ -209,7 +214,7 @@ const HomePage = () => {
     }
   }
 
-  // 초기에는 영역 데이터를 로드하지 않음 (조회 버튼 클릭 시에만 로드)
+  // 데이터는 조회 버튼 클릭 시에만 로드됨 (초기 자동 로딩 없음)
 
   // 마커 데이터 변환 (유효한 좌표가 있는 거래처만)
   const markers = partners
@@ -761,6 +766,7 @@ const HomePage = () => {
   }
 
   // 데스크톱 레이아웃
+  console.log('🖥️ HomePage 데스크톱 레이아웃 렌더링')
   return React.createElement('div', 
     { style: { width: '100%', height: 'calc(100vh - 60px)', display: 'flex' } },
     
