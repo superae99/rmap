@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { config } from './config/environment'
+import './styles/global.css'
 
 // 카카오맵 API 동적 로드 (서버에서 제공하는 안전한 스크립트 사용)
 const loadKakaoMapScript = async () => {

@@ -503,7 +503,7 @@ const HomePage = () => {
       
       // 모바일 지도 (전체 화면)
       React.createElement('div',
-        { style: { width: '100%', height: '100vh', position: 'relative' } },
+        { style: { width: '100%', height: 'calc(100vh - 140px)', position: 'relative' } },
         React.createElement(KakaoMap, {
           width: '100%',
           height: '100%',

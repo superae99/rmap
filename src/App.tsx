@@ -293,7 +293,7 @@ function App() {
   // 모바일인 경우 다른 레이아웃 사용
   if (isMobile) {
     return React.createElement('div',
-      { style: { minHeight: '100vh', backgroundColor: '#f5f5f5' } },
+      { style: { minHeight: '100vh', backgroundColor: '#f5f5f5', position: 'relative' } },
       React.createElement(MobileNavigation, {
         currentPage,
         user,
@@ -302,7 +302,13 @@ function App() {
         onPasswordChange: openPasswordModal
       }),
       React.createElement('div', 
-        { style: { paddingTop: '60px', paddingBottom: '80px' } },
+        { style: { 
+          paddingTop: '60px', 
+          paddingBottom: '80px',
+          width: '100%',
+          height: '100%',
+          position: 'relative'
+        } },
         renderCurrentPage()
       ),
       

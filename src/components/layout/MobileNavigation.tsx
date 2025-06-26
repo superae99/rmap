@@ -260,10 +260,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         ))}
       </nav>
 
-      {/* 콘텐츠 영역을 위한 여백 */}
-      <div style={{ paddingTop: '60px', paddingBottom: '80px', minHeight: '100vh' }}>
-        {/* 페이지 콘텐츠가 여기에 들어감 */}
-      </div>
     </>
   )
 }
