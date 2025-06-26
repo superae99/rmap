@@ -113,6 +113,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           <div className="filter-group">
             <label>지점</label>
             <select
+              key={`office-${filters.branchFilter}`}
               value={filters.officeFilter || ''}
               onChange={(e) => handleOfficeChange(e.target.value)}
             >
@@ -131,6 +132,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           <div className="filter-group">
             <label>담당자</label>
             <select
+              key={`manager-${filters.branchFilter}-${filters.officeFilter}`}
               value={filters.managerFilter || ''}
               onChange={(e) => onFilterChange('managerFilter', e.target.value || null)}
             >
