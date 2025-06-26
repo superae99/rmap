@@ -380,14 +380,14 @@ const PartnersPage = () => {
       ),
     ]),
 
-    // FilterPanel 사용 (HomePage/AreasPage와 완전히 동일한 방식)
+    // FilterPanel 사용 (HomePage와 완전히 동일한 방식)
     React.createElement(FilterPanel, {
       options,
       filters,
       onFilterChange: handleFilterChange,
       onReset: resetFilters,
       onSearch: fetchPartners,
-      loading: loading || filterLoading
+      loading
     }),
 
     // 거래처 목록
