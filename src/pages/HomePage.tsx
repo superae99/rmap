@@ -242,6 +242,7 @@ const HomePage = () => {
         console.log(`  → RTM 채널: "${partner.rtmChannel}" (직접 사용)`)
         console.log(`  → 최종 RTM 채널: "${rtmChannel}"`)
         console.log(`  → 마커 색상: ${managerColor}`)
+        console.log(`  → 예상 마커 형태: ${rtmChannel === '업소' ? '네모' : rtmChannel === '매장' ? '동그라미' : rtmChannel === '스피리츠' ? '다이아몬드' : rtmChannel === 'KA' ? '삼각형' : '기본(다이아몬드)'}`)
         console.log('---')
       }
       
