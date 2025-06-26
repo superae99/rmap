@@ -464,6 +464,38 @@ const HomePage = () => {
     updateFilter(key, value)
   }
 
+  // 검색 핸들러 (FilterPanel에서 사용)
+  const handleSearch = async () => {
+    try {
+      setLoading(true)
+      
+      // 거래처 데이터 로드
+      const partnersData = await partnerAPI.getPartners(filters)
+      setPartners(partnersData.partners || partnersData)
+      
+      // 영역 데이터 로드
+      const areasData = await loadAreasData(filters, localStorage.getItem('token') || undefined)
+      setAreas(areasData)
+      
+      // 지도 영역 처리
+      const processedMapAreas = areasData.map((area) => ({
+        id: area.id,
+        name: area.name,
+        coordinates: area.coordinates,
+        color: '#667eea',
+        strokeColor: '#667eea',
+        strokeWeight: 2,
+        opacity: 0.3
+      }))
+      setMapAreas(processedMapAreas)
+      
+    } catch (error) {
+      console.error('검색 실패:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (isMobile) {
     // 모바일 레이아웃
     return React.createElement('div', 
