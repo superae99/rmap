@@ -354,10 +354,15 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           markerOptions.image = markerImage;
           // 디버깅: 처음 5개 마커만 로그
           if (markersRef.current.length < 5) {
-            console.log(`🎯 마커 이미지 생성: ${markerData.id} - RTM: ${markerData.rtmChannel}, 색상: ${markerData.markerColor}`)
+            console.log(`🎯 마커 이미지 생성: ${markerData.id} - RTM: "${markerData.rtmChannel}", 색상: ${markerData.markerColor}`)
           }
         } else {
-          console.warn(`⚠️ 마커 이미지 생성 실패: ${markerData.id} - RTM: ${markerData.rtmChannel}`)
+          console.warn(`⚠️ 마커 이미지 생성 실패: ${markerData.id} - RTM: "${markerData.rtmChannel}"`)
+        }
+      } else {
+        // 디버깅: rtmChannel이 없는 경우 로그
+        if (markersRef.current.length < 5) {
+          console.log(`❌ RTM 채널 없음: ${markerData.id} - markerData:`, markerData)
         }
       }
 
