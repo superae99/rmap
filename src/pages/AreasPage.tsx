@@ -571,8 +571,21 @@ const AreasPage = () => {
           })
         ),
 
-        // 지사 필터 (admin 계정만 표시)
-        user && (user.account === 'admin' || user.jobTitle?.includes('시스템관리자')) && filterOptions && filterOptions.branches.length > 0 && React.createElement('div', { style: { flex: '1', minWidth: '140px' } },
+        // 지사 필터 (시스템관리자 + 일반관리자)
+        user && (
+          user.account === 'admin' || 
+          user.jobTitle?.includes('시스템관리자') ||
+          user.position?.includes('본부장') || 
+          user.position?.includes('부문장') || 
+          user.position?.includes('팀장') || 
+          user.position?.includes('매니저') ||
+          user.jobTitle?.includes('본부장') || 
+          user.jobTitle?.includes('부문장') || 
+          user.jobTitle?.includes('팀장') || 
+          user.jobTitle?.includes('매니저') ||
+          user.fieldType === '스탭' ||
+          user.fieldType === 'STAFF'
+        ) && filterOptions && filterOptions.branches.length > 0 && React.createElement('div', { style: { flex: '1', minWidth: '140px' } },
           React.createElement('label', 
             { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
             '지사'
@@ -597,8 +610,21 @@ const AreasPage = () => {
           )
         ),
 
-        // 지점 필터 (admin 계정만 표시)
-        user && (user.account === 'admin' || user.jobTitle?.includes('시스템관리자')) && filterOptions && filterOptions.offices.length > 0 && React.createElement('div', { style: { flex: '1', minWidth: '140px' } },
+        // 지점 필터 (시스템관리자 + 일반관리자)
+        user && (
+          user.account === 'admin' || 
+          user.jobTitle?.includes('시스템관리자') ||
+          user.position?.includes('본부장') || 
+          user.position?.includes('부문장') || 
+          user.position?.includes('팀장') || 
+          user.position?.includes('매니저') ||
+          user.jobTitle?.includes('본부장') || 
+          user.jobTitle?.includes('부문장') || 
+          user.jobTitle?.includes('팀장') || 
+          user.jobTitle?.includes('매니저') ||
+          user.fieldType === '스탭' ||
+          user.fieldType === 'STAFF'
+        ) && filterOptions && filterOptions.offices.length > 0 && React.createElement('div', { style: { flex: '1', minWidth: '140px' } },
           React.createElement('label', 
             { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
             '지점'
