@@ -39,7 +39,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        zIndex: 1000,
+        zIndex: 2100,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -225,7 +225,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         backgroundColor: 'white',
         borderTop: '1px solid #eee',
         display: 'flex',
-        zIndex: 1000,
+        zIndex: 2100,
         boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
       }}>
         {navItems.map(item => (

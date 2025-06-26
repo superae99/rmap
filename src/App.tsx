@@ -24,7 +24,9 @@ function App() {
   // 모바일 감지
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      console.log('🔍 모바일 감지:', mobile, 'width:', window.innerWidth);
     };
     
     checkMobile();
@@ -155,6 +157,8 @@ function App() {
   if (path === '/login' || !isAuthenticated) {
     return React.createElement(LoginPage);
   }
+  
+  console.log('🎯 App.tsx - isMobile:', isMobile);
 
   // 네비게이션 바 컴포넌트
   const renderNavigation = () => {
@@ -301,16 +305,8 @@ function App() {
         onLogout: handleLogout,
         onPasswordChange: openPasswordModal
       }),
-      React.createElement('div', 
-        { style: { 
-          paddingTop: '60px', 
-          paddingBottom: '80px',
-          width: '100%',
-          height: '100%',
-          position: 'relative'
-        } },
-        renderCurrentPage()
-      ),
+      // 모바일에서는 패딩 없이 페이지 렌더링 (각 페이지가 자체적으로 처리)
+      renderCurrentPage(),
       
       // 비밀번호 변경 모달 (모바일용)
       showPasswordModal && React.createElement('div',

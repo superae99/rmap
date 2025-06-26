@@ -52,7 +52,9 @@ const HomePage = () => {
   // 모바일 감지
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      console.log('🏠 HomePage 모바일 감지:', mobile, 'width:', window.innerWidth);
     };
     
     checkMobile();
@@ -499,7 +501,15 @@ const HomePage = () => {
   if (isMobile) {
     // 모바일 레이아웃
     return React.createElement('div', 
-      { style: { width: '100%', height: '100%', position: 'relative' } },
+      { style: { 
+        width: '100%', 
+        height: '100%', 
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+      } },
       
       // 모바일 지도 (전체 화면)
       React.createElement('div',
