@@ -359,7 +359,15 @@ const PartnersPage = () => {
 
     // FilterPanel 사용 (지사/지점/담당자 필터링)
     React.createElement(FilterPanel, {
-      options,
+      options: options ? {
+        ...options,
+        managers: options.managers.filter(m => {
+          // 강제로 필터링 적용
+          if (filters.branchFilter && m.branchName !== filters.branchFilter) return false;
+          if (filters.officeFilter && m.officeName !== filters.officeFilter) return false;
+          return true;
+        })
+      } : null,
       filters,
       onFilterChange: updateFilter,
       onReset: resetFilters,
