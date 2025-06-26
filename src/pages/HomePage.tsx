@@ -96,6 +96,9 @@ const HomePage = () => {
   const mapChannelToRTM = (channel: string | undefined): string => {
     if (!channel) return '업소' // 기본값
     
+    // 공백 제거 및 정규화
+    const normalizedChannel = channel.trim()
+    
     // 채널 값에 따른 RTM 채널 매핑
     const channelMapping: { [key: string]: string } = {
       // 업소 (일반 음식점)
@@ -130,7 +133,14 @@ const HomePage = () => {
       '특수업장': 'KA'
     }
     
-    return channelMapping[channel] || '업소' // 매핑되지 않은 경우 기본값
+    const rtmChannel = channelMapping[normalizedChannel] || '업소' // 매핑되지 않은 경우 기본값
+    
+    // 처음 몇 개의 채널만 로그 출력 (디버깅용)
+    if (!channelMapping[normalizedChannel] && normalizedChannel) {
+      console.warn(`⚠️ 매핑되지 않은 채널: "${normalizedChannel}" → 기본값 "업소" 사용`)
+    }
+    
+    return rtmChannel
   }
 
 
@@ -169,6 +179,25 @@ const HomePage = () => {
       const partnersData = partnersResponse.partners || partnersResponse
       setPartners(Array.isArray(partnersData) ? partnersData : [])
       
+      // 채널 통계 출력 (디버깅용)
+      if (Array.isArray(partnersData) && partnersData.length > 0) {
+        const channelStats: { [key: string]: number } = {}
+        const rtmStats: { [key: string]: number } = {}
+        
+        partnersData.forEach((partner: Partner) => {
+          const channel = partner.channel || '없음'
+          const rtmChannel = partner.rtmChannel || '없음'
+          
+          channelStats[channel] = (channelStats[channel] || 0) + 1
+          rtmStats[rtmChannel] = (rtmStats[rtmChannel] || 0) + 1
+        })
+        
+        console.log('📊 채널 통계:')
+        console.log('원본 채널:', channelStats)
+        console.log('RTM 채널:', rtmStats)
+        console.log('총 거래처 수:', partnersData.length)
+      }
+      
     } catch (error) {
       console.error('데이터 로드 실패:', error)
       setPartners([])
@@ -195,13 +224,18 @@ const HomePage = () => {
       const lat = Number(partner.latitude)
       const lng = Number(partner.longitude)
       
-      // RTM 채널 매핑
-      const rtmChannel = mapChannelToRTM(partner.channel)
+      // RTM 채널 사용 (이미 데이터베이스에 저장된 값)
+      const rtmChannel = partner.rtmChannel || 'KA' // 기본값 KA
       
-      // 디버깅용 로그 (처음 5개만)
-      if (index < 5) {
-        console.log(`마커 ${partner.partnerCode}: ${partner.partnerName} - 위도: ${lat}, 경도: ${lng}`)
-        console.log(`  → 채널: "${partner.channel}" → RTM: "${rtmChannel}"`)
+      // 디버깅용 로그 (처음 10개만)
+      if (index < 10) {
+        console.log(`마커 ${index + 1} - ${partner.partnerCode}: ${partner.partnerName}`)
+        console.log(`  → 위도: ${lat}, 경도: ${lng}`)
+        console.log(`  → 원본 채널: "${partner.channel}"`)
+        console.log(`  → RTM 채널: "${partner.rtmChannel}" (직접 사용)`)
+        console.log(`  → 최종 RTM 채널: "${rtmChannel}"`)
+        console.log(`  → 마커 색상: ${managerColor}`)
+        console.log('---')
       }
       
       return {
@@ -479,17 +513,7 @@ const HomePage = () => {
       const areasData = await loadAreasData(filters, localStorage.getItem('token') || undefined)
       setAreas(areasData)
       
-      // 지도 영역 처리
-      const processedMapAreas = areasData.map((area) => ({
-        id: area.id,
-        name: area.name,
-        coordinates: area.coordinates,
-        color: '#667eea',
-        strokeColor: '#667eea',
-        strokeWeight: 2,
-        opacity: 0.3
-      }))
-      setMapAreas(processedMapAreas)
+      // 영역 데이터는 이미 setAreas로 설정되므로 추가 처리 불필요
       
     } catch (error) {
       console.error('검색 실패:', error)

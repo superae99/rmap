@@ -352,6 +352,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         const markerImage = createMarkerImage(markerData.rtmChannel, markerData.markerColor || '#667eea', currentZoom);
         if (markerImage) {
           markerOptions.image = markerImage;
+          // 디버깅: 처음 5개 마커만 로그
+          if (markersRef.current.length < 5) {
+            console.log(`🎯 마커 이미지 생성: ${markerData.id} - RTM: ${markerData.rtmChannel}, 색상: ${markerData.markerColor}`)
+          }
+        } else {
+          console.warn(`⚠️ 마커 이미지 생성 실패: ${markerData.id} - RTM: ${markerData.rtmChannel}`)
         }
       }
 
@@ -516,7 +522,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       });
 
       // 마우스 오버 효과 및 adm_nm 표시
-      window.kakao.maps.event.addListener(polygon, 'mouseover', (mouseEvent: any) => {
+      window.kakao.maps.event.addListener(polygon, 'mouseover', () => {
         polygon.setOptions({ fillOpacity: 0.5 });
         
         // adm_nm 표시 (salesTerritory 또는 properties에서 가져오기)

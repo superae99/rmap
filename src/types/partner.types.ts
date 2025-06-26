@@ -11,6 +11,7 @@ export interface Partner {
   managerChangedDate?: string
   managerChangeReason?: string
   channel?: string
+  rtmChannel?: string
   partnerGrade?: string
   managementGrade?: string
   businessNumber?: string
