@@ -343,28 +343,14 @@ const PartnersPage = () => {
     ),
 
     // FilterPanel 사용 (지사/지점/담당자 필터링)
-    React.createElement('div', { 
-      style: { 
-        padding: '10px', 
-        backgroundColor: '#f0f0f0', 
-        border: '2px solid red',
-        margin: '10px 0'
-      } 
-    }, [
-      React.createElement('h3', { key: 'title' }, 'FilterPanel 디버깅'),
-      React.createElement('p', { key: 'options' }, 'options: ' + (!!options)),
-      React.createElement('p', { key: 'loading' }, 'filterLoading: ' + filterLoading),
-      React.createElement('p', { key: 'filters' }, 'filters: ' + JSON.stringify(filters)),
-      options ? React.createElement(FilterPanel, {
-        key: 'filterpanel',
-        options,
-        filters,
-        onFilterChange: updateFilter,
-        onReset: resetFilters,
-        onSearch: fetchPartners,
-        loading: filterLoading
-      }) : null
-    ].filter(Boolean)),
+    options && React.createElement(FilterPanel, {
+      options,
+      filters,
+      onFilterChange: updateFilter,
+      onReset: resetFilters,
+      onSearch: fetchPartners,
+      loading: filterLoading
+    }),
 
     // 거래처 목록
     React.createElement('div',
