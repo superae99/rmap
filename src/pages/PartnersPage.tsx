@@ -377,6 +377,7 @@ const PartnersPage = () => {
 
     // FilterPanel 사용 (지사/지점/담당자 필터링) - 다른 페이지와 동일한 방식
     React.createElement(FilterPanel, {
+      key: `${filters.branchFilter}-${filters.officeFilter}`, // 강제 리렌더링
       options,
       filters,
       onFilterChange: updateFilter,
