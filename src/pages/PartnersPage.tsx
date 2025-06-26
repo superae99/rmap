@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { partnerAPI, authAPI } from '../services/api'
 import type { Partner } from '../types/partner.types'
 import { exportFilteredPartnersToExcel, downloadPartnerTemplate } from '../utils/excelUtils'
-import type { FilterOptions, Manager } from '../types/filter.types'
+import { useFilters } from '../hooks/useFilters'
+import FilterPanel from '../components/common/FilterPanel'
 
 const PartnersPage = () => {
   const [partners, setPartners] = useState<Partner[]>([])
@@ -11,10 +12,6 @@ const PartnersPage = () => {
   const [selectedChannel, setSelectedChannel] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
   const [managerChangeDate, setManagerChangeDate] = useState('')
-  const [selectedManager, setSelectedManager] = useState('')
-  const [selectedBranch, setSelectedBranch] = useState('')
-  const [selectedOffice, setSelectedOffice] = useState('')
-  const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
@@ -22,41 +19,31 @@ const PartnersPage = () => {
   const [showModal, setShowModal] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [hasSearched, setHasSearched] = useState(false)
-  const [filterLoading, setFilterLoading] = useState(true)
 
-  // 사용자 정보와 필터 옵션을 순차적으로 로드 (데이터보다 우선)
+  // useFilters 훅 사용 (홈화면과 동일)
+  const { options, filters, updateFilter, resetFilters, loading: filterLoading } = useFilters()
+
+  // 사용자 정보 로드 (필터 옵션은 useFilters 훅에서 자동 처리)
   useEffect(() => {
-    const loadUserAndFilters = async () => {
+    const loadUser = async () => {
       try {
-        setFilterLoading(true)
         const token = localStorage.getItem('token')
         if (!token) {
           console.log('토큰이 없습니다.')
-          setFilterLoading(false)
           return
         }
 
-        // 1단계: 사용자 정보 먼저 로드
         console.log('🔄 사용자 정보 로딩 중...')
         const userData = await authAPI.getProfile()
         setUser(userData)
         console.log('✅ 사용자 정보 로드 완료:', userData)
-
-        // 2단계: 필터 옵션 로드 (사용자 정보 기반)
-        console.log('🔄 필터 옵션 로딩 중...')
-        const options = await partnerAPI.getFilterOptions()
-        setFilterOptions(options)
-        console.log('✅ 필터 옵션 로드 완료:', options)
-        console.log('📊 담당자 데이터 구조:', options.managers?.slice(0, 3))
         
       } catch (error) {
-        console.error('사용자 정보 또는 필터 옵션 로드 실패:', error)
-      } finally {
-        setFilterLoading(false)
+        console.error('사용자 정보 로드 실패:', error)
       }
     }
 
-    loadUserAndFilters()
+    loadUser()
   }, [])
 
   // 거래처 데이터 가져오기 함수
@@ -72,9 +59,9 @@ const PartnersPage = () => {
       if (selectedChannel) params.channel = selectedChannel
       if (selectedGrade) params.grade = selectedGrade
       if (managerChangeDate) params.managerChangeDate = managerChangeDate
-      if (selectedManager) params.managerFilter = selectedManager
-      if (selectedBranch) params.branchFilter = selectedBranch
-      if (selectedOffice) params.officeFilter = selectedOffice
+      if (filters.managerFilter) params.managerFilter = filters.managerFilter
+      if (filters.branchFilter) params.branchFilter = filters.branchFilter
+      if (filters.officeFilter) params.officeFilter = filters.officeFilter
 
       const response = await partnerAPI.getPartners(params)
       const partnersData = response.partners || response
@@ -139,9 +126,9 @@ const PartnersPage = () => {
         channel: selectedChannel,
         grade: selectedGrade,
         managerChangeDate,
-        managerFilter: selectedManager,
-        branchFilter: selectedBranch,
-        officeFilter: selectedOffice
+        managerFilter: filters.managerFilter || undefined,
+        branchFilter: filters.branchFilter || undefined,
+        officeFilter: filters.officeFilter || undefined
       }
     )
 
@@ -162,33 +149,6 @@ const PartnersPage = () => {
     }
   }
 
-  // 필터링된 담당자 목록 계산
-  const getFilteredManagers = () => {
-    if (!filterOptions?.managers) return []
-    
-    console.log('🔍 담당자 필터링 시작')
-    console.log('선택된 지사:', selectedBranch)
-    console.log('선택된 지점:', selectedOffice)
-    console.log('전체 담당자 수:', filterOptions.managers.length)
-    
-    const filteredManagers = filterOptions.managers.filter(manager => {
-      // 지사 필터가 선택된 경우
-      if (selectedBranch && manager.branchName !== selectedBranch) {
-        console.log(`❌ 담당자 ${manager.employeeName} 제외: 지사 불일치 (${manager.branchName} !== ${selectedBranch})`)
-        return false
-      }
-      // 지점 필터가 선택된 경우  
-      if (selectedOffice && manager.officeName !== selectedOffice) {
-        console.log(`❌ 담당자 ${manager.employeeName} 제외: 지점 불일치 (${manager.officeName} !== ${selectedOffice})`)
-        return false
-      }
-      console.log(`✅ 담당자 ${manager.employeeName} 포함: 지사=${manager.branchName}, 지점=${manager.officeName}`)
-      return true
-    })
-    
-    console.log('필터링된 담당자 수:', filteredManagers.length)
-    return filteredManagers
-  }
 
   return React.createElement('div',
     { style: { padding: '20px', maxWidth: '1200px', margin: '0 auto' } },
@@ -244,7 +204,7 @@ const PartnersPage = () => {
       )
     ),
 
-    // 검색 및 필터 영역
+    // 검색 및 기본 필터 영역
     React.createElement('div',
       { 
         style: { 
@@ -257,10 +217,10 @@ const PartnersPage = () => {
       },
       React.createElement('form', { onSubmit: handleSearch },
         React.createElement('div', 
-          { style: { display: 'flex', alignItems: 'end', gap: '12px' } },
+          { style: { display: 'flex', alignItems: 'end', gap: '12px', flexWrap: 'wrap' } },
           
           // 검색어 입력
-          React.createElement('div', { style: { flex: '1', minWidth: '150px' } },
+          React.createElement('div', { style: { flex: '1', minWidth: '200px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '검색어'
@@ -283,7 +243,7 @@ const PartnersPage = () => {
           ),
 
           // 채널 필터
-          React.createElement('div', { style: { flex: '0 0 90px', minWidth: '90px' } },
+          React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '채널'
@@ -334,135 +294,8 @@ const PartnersPage = () => {
             )
           ),
 
-          // 지사 필터 (시스템관리자 + 일반관리자)
-          user && (
-            user.account === 'admin' || 
-            user.jobTitle?.includes('시스템관리자') ||
-            user.position?.includes('본부장') || 
-            user.position?.includes('부문장') || 
-            user.position?.includes('팀장') || 
-            user.position?.includes('매니저') ||
-            user.jobTitle?.includes('본부장') || 
-            user.jobTitle?.includes('부문장') || 
-            user.jobTitle?.includes('팀장') || 
-            user.jobTitle?.includes('매니저') ||
-            user.fieldType === '스탭' ||
-            user.fieldType === 'STAFF'
-          ) && React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
-            React.createElement('label', 
-              { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-              '지사'
-            ),
-            React.createElement('select', {
-              value: selectedBranch,
-              onChange: (e: React.ChangeEvent<HTMLSelectElement>) => {
-                handleFilterChange(setSelectedBranch, e.target.value);
-                setSelectedOffice(''); // 지사 변경 시 지점 필터 초기화
-                setSelectedManager(''); // 지사 변경 시 담당자 필터 초기화
-              },
-              disabled: filterLoading || !filterOptions,
-              style: {
-                width: '100%',
-                padding: '8px 10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                height: '38px',
-                boxSizing: 'border-box',
-                backgroundColor: filterLoading ? '#f5f5f5' : 'white',
-                cursor: filterLoading ? 'not-allowed' : 'pointer'
-              }
-            },
-              React.createElement('option', { value: '' }, filterLoading ? '로딩 중...' : '전체'),
-              ...(filterOptions?.branches || []).map(branch =>
-                React.createElement('option', { key: branch, value: branch }, branch)
-              )
-            )
-          ),
-
-          // 지점 필터 (시스템관리자 + 일반관리자)
-          user && (
-            user.account === 'admin' || 
-            user.jobTitle?.includes('시스템관리자') ||
-            user.position?.includes('본부장') || 
-            user.position?.includes('부문장') || 
-            user.position?.includes('팀장') || 
-            user.position?.includes('매니저') ||
-            user.jobTitle?.includes('본부장') || 
-            user.jobTitle?.includes('부문장') || 
-            user.jobTitle?.includes('팀장') || 
-            user.jobTitle?.includes('매니저') ||
-            user.fieldType === '스탭' ||
-            user.fieldType === 'STAFF'
-          ) && React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
-            React.createElement('label', 
-              { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-              '지점'
-            ),
-            React.createElement('select', {
-              value: selectedOffice,
-              onChange: (e: React.ChangeEvent<HTMLSelectElement>) => {
-                handleFilterChange(setSelectedOffice, e.target.value);
-                setSelectedManager(''); // 지점 변경 시 담당자 필터 초기화
-              },
-              disabled: filterLoading || !filterOptions,
-              style: {
-                width: '100%',
-                padding: '8px 10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                height: '38px',
-                boxSizing: 'border-box',
-                backgroundColor: filterLoading ? '#f5f5f5' : 'white',
-                cursor: filterLoading ? 'not-allowed' : 'pointer'
-              }
-            },
-              React.createElement('option', { value: '' }, filterLoading ? '로딩 중...' : '전체'),
-              ...(filterOptions?.offices || [])
-                .filter(office => !selectedBranch || office.branchName === selectedBranch)
-                .map(office =>
-                  React.createElement('option', { key: office.officeName, value: office.officeName }, office.officeName)
-                )
-            )
-          ),
-
-          // 담당자 필터 (지사/지점 변경 시 다시 렌더링되도록 key 추가)
-          React.createElement('div', { 
-            key: `manager-filter-${selectedBranch}-${selectedOffice}`, // 강제 리렌더링
-            style: { flex: '0 0 130px', minWidth: '130px' } 
-          },
-            React.createElement('label', 
-              { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-              '담당자'
-            ),
-            React.createElement('select', {
-              value: selectedManager,
-              onChange: (e: React.ChangeEvent<HTMLSelectElement>) => handleFilterChange(setSelectedManager, e.target.value),
-              disabled: filterLoading || !filterOptions,
-              style: {
-                width: '100%',
-                padding: '8px 10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                height: '38px',
-                boxSizing: 'border-box',
-                backgroundColor: filterLoading ? '#f5f5f5' : 'white',
-                cursor: filterLoading ? 'not-allowed' : 'pointer'
-              }
-            },
-              React.createElement('option', { value: '' }, filterLoading ? '로딩 중...' : '전체'),
-              ...getFilteredManagers().map(manager =>
-                React.createElement('option', { key: manager.employeeId, value: manager.employeeId },
-                  `${manager.employeeName} (${manager.officeName})`
-                )
-              )
-            )
-          ),
-
           // 담당자변경일 필터
-          React.createElement('div', { style: { flex: '0 0 130px', minWidth: '130px' } },
+          React.createElement('div', { style: { flex: '0 0 140px', minWidth: '140px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '담당자변경일'
@@ -483,13 +316,13 @@ const PartnersPage = () => {
             })
           ),
 
-          // 검색 버튼 (마지막 요소는 marginRight 없음)
+          // 검색 버튼
           React.createElement('button',
             {
               type: 'submit',
               style: {
-                flex: '0 0 80px',
-                minWidth: '80px',
+                flex: '0 0 100px',
+                minWidth: '100px',
                 padding: '8px 16px',
                 backgroundColor: '#667eea',
                 color: 'white',
@@ -508,6 +341,16 @@ const PartnersPage = () => {
         )
       )
     ),
+
+    // FilterPanel 사용 (지사/지점/담당자 필터링)
+    React.createElement(FilterPanel, {
+      options,
+      filters,
+      onFilterChange: updateFilter,
+      onReset: resetFilters,
+      onSearch: fetchPartners,
+      loading: filterLoading
+    }),
 
     // 거래처 목록
     React.createElement('div',
@@ -538,7 +381,7 @@ const PartnersPage = () => {
           React.createElement('div', 
             { style: { fontSize: '14px', color: '#666' } },
             loading ? '로딩 중...' : (
-              searchTerm || selectedChannel || selectedGrade || managerChangeDate || selectedManager || selectedBranch || selectedOffice
+              searchTerm || selectedChannel || selectedGrade || managerChangeDate || filters.managerFilter || filters.branchFilter || filters.officeFilter
                 ? `검색결과 ${totalCount}개 (전체에서 필터링됨)`
                 : `총 ${totalCount}개`
             )
