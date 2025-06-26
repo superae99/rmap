@@ -162,6 +162,34 @@ const PartnersPage = () => {
     }
   }
 
+  // 필터링된 담당자 목록 계산
+  const getFilteredManagers = () => {
+    if (!filterOptions?.managers) return []
+    
+    console.log('🔍 담당자 필터링 시작')
+    console.log('선택된 지사:', selectedBranch)
+    console.log('선택된 지점:', selectedOffice)
+    console.log('전체 담당자 수:', filterOptions.managers.length)
+    
+    const filteredManagers = filterOptions.managers.filter(manager => {
+      // 지사 필터가 선택된 경우
+      if (selectedBranch && manager.branchName !== selectedBranch) {
+        console.log(`❌ 담당자 ${manager.employeeName} 제외: 지사 불일치 (${manager.branchName} !== ${selectedBranch})`)
+        return false
+      }
+      // 지점 필터가 선택된 경우  
+      if (selectedOffice && manager.officeName !== selectedOffice) {
+        console.log(`❌ 담당자 ${manager.employeeName} 제외: 지점 불일치 (${manager.officeName} !== ${selectedOffice})`)
+        return false
+      }
+      console.log(`✅ 담당자 ${manager.employeeName} 포함: 지사=${manager.branchName}, 지점=${manager.officeName}`)
+      return true
+    })
+    
+    console.log('필터링된 담당자 수:', filteredManagers.length)
+    return filteredManagers
+  }
+
   return React.createElement('div',
     { style: { padding: '20px', maxWidth: '1200px', margin: '0 auto' } },
     
@@ -399,8 +427,11 @@ const PartnersPage = () => {
             )
           ),
 
-          // 담당자 필터
-          React.createElement('div', { style: { flex: '0 0 130px', minWidth: '130px' } },
+          // 담당자 필터 (지사/지점 변경 시 다시 렌더링되도록 key 추가)
+          React.createElement('div', { 
+            key: `manager-filter-${selectedBranch}-${selectedOffice}`, // 강제 리렌더링
+            style: { flex: '0 0 130px', minWidth: '130px' } 
+          },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '담당자'
@@ -422,30 +453,11 @@ const PartnersPage = () => {
               }
             },
               React.createElement('option', { value: '' }, filterLoading ? '로딩 중...' : '전체'),
-              ...(filterOptions?.managers || [])
-                .filter(manager => {
-                  // 디버깅: 필터 조건 확인
-                  const shouldInclude = (() => {
-                    // 지사 필터가 선택된 경우, 해당 지사에 속한 담당자만 표시
-                    if (selectedBranch && manager.branchName !== selectedBranch) {
-                      console.log(`❌ 담당자 ${manager.employeeName} 제외: 지사 불일치 (${manager.branchName} !== ${selectedBranch})`)
-                      return false
-                    }
-                    // 지점 필터가 선택된 경우, 해당 지점에 속한 담당자만 표시
-                    if (selectedOffice && manager.officeName !== selectedOffice) {
-                      console.log(`❌ 담당자 ${manager.employeeName} 제외: 지점 불일치 (${manager.officeName} !== ${selectedOffice})`)
-                      return false
-                    }
-                    console.log(`✅ 담당자 ${manager.employeeName} 포함: 지사=${manager.branchName}, 지점=${manager.officeName}`)
-                    return true
-                  })()
-                  return shouldInclude
-                })
-                .map(manager =>
-                  React.createElement('option', { key: manager.employeeId, value: manager.employeeId },
-                    `${manager.employeeName} (${manager.officeName})`
-                  )
+              ...getFilteredManagers().map(manager =>
+                React.createElement('option', { key: manager.employeeId, value: manager.employeeId },
+                  `${manager.employeeName} (${manager.officeName})`
                 )
+              )
             )
           ),
 
