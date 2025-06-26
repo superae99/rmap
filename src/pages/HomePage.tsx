@@ -253,7 +253,8 @@ const HomePage = () => {
         console.log(`마커 ${index + 1} - ${partner.partnerCode}: ${partner.partnerName}`)
         console.log(`  → 위도: ${lat}, 경도: ${lng}`)
         console.log(`  → 원본 채널: "${partner.channel}"`)
-        console.log(`  → RTM 채널: "${partner.rtmChannel}" (직접 사용)`)
+        console.log(`  → RTM 채널: "${partner.rtmChannel}" (DB값)`)
+        console.log(`  → 매핑 결과: "${mapChannelToRTM(partner.channel)}" (매핑값)`)
         console.log(`  → 최종 RTM 채널: "${rtmChannel}"`)
         console.log(`  → 마커 색상: ${managerColor}`)
         console.log(`  → 예상 마커 형태: ${rtmChannel === '업소' ? '네모' : rtmChannel === '매장' ? '동그라미' : rtmChannel === '스피리츠' ? '다이아몬드' : rtmChannel === 'KA' ? '삼각형' : '기본(다이아몬드)'}`)
@@ -891,15 +892,51 @@ const HomePage = () => {
         )
       ),
 
-      // RTM 채널별 마커 범례
+      // RTM 채널 필터 (데스크톱)
       React.createElement('div', 
         { style: { backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px' } },
-        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '📍 RTM 채널별 마커'),
-        React.createElement('div', { style: { fontSize: '14px' } },
-          React.createElement('div', { style: { marginBottom: '5px' } }, '■ 업소 (네모)'),
-          React.createElement('div', { style: { marginBottom: '5px' } }, '● 매장 (동그라미)'),
-          React.createElement('div', { style: { marginBottom: '5px' } }, '♦ 스피리츠 (다이아몬드)'),
-          React.createElement('div', null, '▲ KA (삼각형)')
+        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '📍 마커 채널 필터'),
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } }, 
+          // 업소 체크박스
+          React.createElement('label',
+            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
+            React.createElement('input', {
+              type: 'checkbox',
+              checked: rtmChannelFilters['업소'],
+              onChange: () => toggleRtmChannel('업소')
+            }),
+            '⬜ 업소 (네모)'
+          ),
+          // 매장 체크박스
+          React.createElement('label',
+            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
+            React.createElement('input', {
+              type: 'checkbox',
+              checked: rtmChannelFilters['매장'],
+              onChange: () => toggleRtmChannel('매장')
+            }),
+            '⭕ 매장 (동그라미)'
+          ),
+          // 스피리츠 체크박스
+          React.createElement('label',
+            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
+            React.createElement('input', {
+              type: 'checkbox',
+              checked: rtmChannelFilters['스피리츠'],
+              onChange: () => toggleRtmChannel('스피리츠')
+            }),
+            '♦️ 스피리츠 (다이아몬드)'
+          ),
+          // KA 체크박스
+          React.createElement('label',
+            { style: { display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', gap: '8px' } },
+            React.createElement('input', {
+              type: 'checkbox',
+              checked: rtmChannelFilters['KA'],
+              onChange: () => toggleRtmChannel('KA')
+            }),
+            '🔺 KA (삼각형)'
+          )
         )
       ),
 
