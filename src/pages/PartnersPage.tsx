@@ -329,6 +329,7 @@ const PartnersPage = () => {
               onChange: (e: React.ChangeEvent<HTMLSelectElement>) => {
                 handleFilterChange(setSelectedBranch, e.target.value);
                 setSelectedOffice(''); // 지사 변경 시 지점 필터 초기화
+                setSelectedManager(''); // 지사 변경 시 담당자 필터 초기화
               },
               disabled: filterLoading || !filterOptions,
               style: {
@@ -371,7 +372,10 @@ const PartnersPage = () => {
             ),
             React.createElement('select', {
               value: selectedOffice,
-              onChange: (e: React.ChangeEvent<HTMLSelectElement>) => handleFilterChange(setSelectedOffice, e.target.value),
+              onChange: (e: React.ChangeEvent<HTMLSelectElement>) => {
+                handleFilterChange(setSelectedOffice, e.target.value);
+                setSelectedManager(''); // 지점 변경 시 담당자 필터 초기화
+              },
               disabled: filterLoading || !filterOptions,
               style: {
                 width: '100%',
@@ -417,11 +421,23 @@ const PartnersPage = () => {
               }
             },
               React.createElement('option', { value: '' }, filterLoading ? '로딩 중...' : '전체'),
-              ...(filterOptions?.managers || []).map(manager =>
-                React.createElement('option', { key: manager.employeeId, value: manager.employeeId },
-                  `${manager.employeeName} (${manager.officeName})`
+              ...(filterOptions?.managers || [])
+                .filter(manager => {
+                  // 지사 필터가 선택된 경우, 해당 지사에 속한 담당자만 표시
+                  if (selectedBranch && manager.branchName !== selectedBranch) {
+                    return false
+                  }
+                  // 지점 필터가 선택된 경우, 해당 지점에 속한 담당자만 표시
+                  if (selectedOffice && manager.officeName !== selectedOffice) {
+                    return false
+                  }
+                  return true
+                })
+                .map(manager =>
+                  React.createElement('option', { key: manager.employeeId, value: manager.employeeId },
+                    `${manager.employeeName} (${manager.officeName})`
+                  )
                 )
-              )
             )
           ),
 
