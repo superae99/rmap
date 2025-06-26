@@ -21,6 +21,8 @@ export const useFilters = () => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }))
       const options = await partnerAPI.getFilterOptions()
+      console.log('🎯 useFilters - 필터 옵션 로드:', options)
+      console.log('🎯 담당자 데이터 샘플:', options.managers?.slice(0, 3))
       setState(prev => ({ 
         ...prev, 
         options, 

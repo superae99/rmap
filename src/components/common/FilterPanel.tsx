@@ -38,12 +38,19 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   // 선택된 지사/지점에 따른 담당자 필터링
   const filteredManagers = options.managers.filter(manager => {
+    console.log(`🔍 FilterPanel 담당자 필터링: ${manager.employeeName}`)
+    console.log(`   담당자 지사: ${manager.branchName}, 선택된 지사: ${filters.branchFilter}`)
+    console.log(`   담당자 지점: ${manager.officeName}, 선택된 지점: ${filters.officeFilter}`)
+    
     if (filters.branchFilter && manager.branchName !== filters.branchFilter) {
+      console.log(`   ❌ 지사 불일치로 제외`)
       return false
     }
     if (filters.officeFilter && manager.officeName !== filters.officeFilter) {
+      console.log(`   ❌ 지점 불일치로 제외`)
       return false
     }
+    console.log(`   ✅ 포함`)
     return true
   })
 
