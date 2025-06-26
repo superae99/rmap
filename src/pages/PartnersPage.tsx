@@ -6,7 +6,7 @@ import type { FilterOptions, Manager } from '../types/filter.types'
 
 const PartnersPage = () => {
   const [partners, setPartners] = useState<Partner[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedChannel, setSelectedChannel] = useState('')
   const [selectedGrade, setSelectedGrade] = useState('')
@@ -21,6 +21,7 @@ const PartnersPage = () => {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [hasSearched, setHasSearched] = useState(false)
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -57,50 +58,55 @@ const PartnersPage = () => {
     loadFilterOptions()
   }, [])
 
-  // 거래처 데이터 가져오기
-  useEffect(() => {
-    const fetchPartners = async () => {
-      try {
-        setLoading(true)
-        const params: any = {
-          page: currentPage,
-          limit: 20,
-        }
-        
-        if (searchTerm) params.search = searchTerm
-        if (selectedChannel) params.channel = selectedChannel
-        if (selectedGrade) params.grade = selectedGrade
-        if (managerChangeDate) params.managerChangeDate = managerChangeDate
-        if (selectedManager) params.managerFilter = selectedManager
-        if (selectedBranch) params.branchFilter = selectedBranch
-        if (selectedOffice) params.officeFilter = selectedOffice
-
-        const response = await partnerAPI.getPartners(params)
-        const partnersData = response.partners || response
-        setPartners(Array.isArray(partnersData) ? partnersData : [])
-        
-        if (response.pagination) {
-          setTotalPages(response.pagination.totalPages)
-          setTotalCount(response.pagination.total)
-        }
-      } catch (error) {
-        console.error('거래처 데이터 로드 실패:', error)
-        setPartners([])
-      } finally {
-        setLoading(false)
+  // 거래처 데이터 가져오기 함수
+  const fetchPartners = async () => {
+    try {
+      setLoading(true)
+      const params: any = {
+        page: currentPage,
+        limit: 20,
       }
-    }
+      
+      if (searchTerm) params.search = searchTerm
+      if (selectedChannel) params.channel = selectedChannel
+      if (selectedGrade) params.grade = selectedGrade
+      if (managerChangeDate) params.managerChangeDate = managerChangeDate
+      if (selectedManager) params.managerFilter = selectedManager
+      if (selectedBranch) params.branchFilter = selectedBranch
+      if (selectedOffice) params.officeFilter = selectedOffice
 
-    fetchPartners()
-  }, [currentPage, searchTerm, selectedChannel, selectedGrade, managerChangeDate, selectedManager, selectedBranch, selectedOffice])
+      const response = await partnerAPI.getPartners(params)
+      const partnersData = response.partners || response
+      setPartners(Array.isArray(partnersData) ? partnersData : [])
+      
+      if (response.pagination) {
+        setTotalPages(response.pagination.totalPages)
+        setTotalCount(response.pagination.total)
+      }
+      setHasSearched(true)
+    } catch (error) {
+      console.error('거래처 데이터 로드 실패:', error)
+      setPartners([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 페이지 변경시에만 자동 조회
+  useEffect(() => {
+    if (hasSearched && currentPage > 1) {
+      fetchPartners()
+    }
+  }, [currentPage])
 
   // 검색 핸들러
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
+    fetchPartners()
   }
 
-  // 필터 변경 시 페이지 리셋
+  // 필터 변경 시 페이지 리셋 (자동 조회는 하지 않음)
   const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value)
     setCurrentPage(1)
@@ -517,6 +523,11 @@ const PartnersPage = () => {
           { style: { padding: '40px', textAlign: 'center', color: '#666' } },
           '데이터를 불러오는 중...'
         ) :
+        !hasSearched ?
+          React.createElement('div',
+            { style: { padding: '40px', textAlign: 'center', color: '#666' } },
+            '🔍 조회 버튼을 눌러 거래처 목록을 조회하세요.'
+          ) :
         partners.length === 0 ?
           React.createElement('div',
             { style: { padding: '40px', textAlign: 'center', color: '#666' } },

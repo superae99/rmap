@@ -58,7 +58,7 @@ interface Area {
 
 const AreasPage = () => {
   const [areas, setAreas] = useState<Area[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedArea, setSelectedArea] = useState<Area | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -71,6 +71,7 @@ const AreasPage = () => {
   const [selectedOffice, setSelectedOffice] = useState('')
   const [selectedManager, setSelectedManager] = useState('')
   const [allPartners, setAllPartners] = useState<Partner[]>([])
+  const [hasSearched, setHasSearched] = useState(false)
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -370,38 +371,39 @@ const AreasPage = () => {
     } finally {
       setLoading(false)
     }
+    setHasSearched(true)
   }
 
-  // 초기 로드 (필터 없이 기본 데이터만)
-  useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true)
-        const token = localStorage.getItem('token')
-        const areasData = await loadAreasData(undefined, token || undefined)
-        
-        // 초기 로드 시에는 거래처 매칭 없이 기본 정보만 설정
-        const basicAreas = areasData.map((area: any) => ({
-          ...area,
-          partnerCount: 0,
-          managerCount: 0,
-          partnersInArea: [],
-          managersInArea: []
-        }))
-        
-        setAreas(basicAreas as any)
-        setMapAreas([]) // 초기에는 맵 데이터 없음
-        console.log(`✅ 초기 ${areasData.length}개 상권 로드 완료 (조회 버튼으로 상세 정보 확인 가능)`)
-      } catch (error) {
-        console.error('초기 상권 데이터 로드 실패:', error)
-        setAreas([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    loadInitialData()
-  }, [])
+  // 초기 로드는 비활성화 - 조회 버튼으로만 데이터 로드
+  // useEffect(() => {
+  //   const loadInitialData = async () => {
+  //     try {
+  //       setLoading(true)
+  //       const token = localStorage.getItem('token')
+  //       const areasData = await loadAreasData(undefined, token || undefined)
+  //       
+  //       // 초기 로드 시에는 거래처 매칭 없이 기본 정보만 설정
+  //       const basicAreas = areasData.map((area: any) => ({
+  //         ...area,
+  //         partnerCount: 0,
+  //         managerCount: 0,
+  //         partnersInArea: [],
+  //         managersInArea: []
+  //       }))
+  //       
+  //       setAreas(basicAreas as any)
+  //       setMapAreas([]) // 초기에는 맵 데이터 없음
+  //       console.log(`✅ 초기 ${areasData.length}개 상권 로드 완료 (조회 버튼으로 상세 정보 확인 가능)`)
+  //     } catch (error) {
+  //       console.error('초기 상권 데이터 로드 실패:', error)
+  //       setAreas([])
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+  //   
+  //   loadInitialData()
+  // }, [])
 
   // 필터 변경 시에는 자동 재로드하지 않음 (조회 버튼으로만 조회)
 
@@ -789,6 +791,11 @@ const AreasPage = () => {
             { style: { gridColumn: 'span 4', textAlign: 'center', padding: '40px', color: '#666' } },
             '데이터를 불러오는 중...'
           ) :
+          !hasSearched ?
+            React.createElement('div',
+              { style: { gridColumn: 'span 4', textAlign: 'center', padding: '40px', color: '#666' } },
+              '🔍 조회 버튼을 눌러 상권 목록을 조회하세요.'
+            ) :
           filteredAreas.length === 0 ?
             React.createElement('div',
               { style: { gridColumn: 'span 4', textAlign: 'center', padding: '40px', color: '#666' } },
