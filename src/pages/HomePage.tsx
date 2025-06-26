@@ -120,10 +120,15 @@ const HomePage = () => {
 
   // RTM 채널 필터 토글
   const toggleRtmChannel = (channel: '업소' | '매장' | '스피리츠' | 'KA') => {
-    setRtmChannelFilters(prev => ({
-      ...prev,
-      [channel]: !prev[channel]
-    }))
+    console.log(`🔄 RTM 채널 토글: ${channel}, 현재 상태:`, rtmChannelFilters[channel])
+    setRtmChannelFilters(prev => {
+      const newFilters = {
+        ...prev,
+        [channel]: !prev[channel]
+      }
+      console.log('🔄 새 필터 상태:', newFilters)
+      return newFilters
+    })
   }
 
   // 검색 핸들러 (FilterPanel에서 사용)
@@ -183,6 +188,14 @@ const HomePage = () => {
       // RTM 채널 필터링
       const rtmChannel = partner.rtmChannel || mapChannelToRTM(partner.channel)
       const channelVisible = rtmChannelFilters[rtmChannel as keyof typeof rtmChannelFilters] !== false
+      
+      // 첫 번째 거래처만 디버깅 로그
+      if (partners.indexOf(partner) === 0) {
+        console.log('🔍 첫 번째 거래처 필터링 체크:')
+        console.log('  RTM 채널:', rtmChannel)
+        console.log('  현재 필터 상태:', rtmChannelFilters)
+        console.log('  채널 표시 여부:', channelVisible)
+      }
       
       return validCoords && channelVisible
     })
@@ -271,6 +284,9 @@ const HomePage = () => {
   }
 
   console.log('🖥️ HomePage 렌더링')
+  console.log('📊 현재 마커 개수:', markers.length, '/ 전체 거래처:', partners.length)
+  console.log('🔧 현재 RTM 필터 상태:', rtmChannelFilters)
+  
   return React.createElement('div', 
     { style: { width: '100%', height: 'calc(100vh - 60px)', display: 'flex' } },
     
