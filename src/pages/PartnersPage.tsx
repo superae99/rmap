@@ -355,6 +355,15 @@ const PartnersPage = () => {
       React.createElement('div', { key: 'branch' }, `현재 지사: ${filters.branchFilter || '전체'}`),
       React.createElement('div', { key: 'office' }, `현재 지점: ${filters.officeFilter || '전체'}`),
       React.createElement('div', { key: 'manager' }, `현재 담당자: ${filters.managerFilter || '전체'}`),
+      React.createElement('div', { key: 'filtered' }, 
+        `필터링된 담당자 수: ${
+          options ? options.managers.filter(m => {
+            if (filters.branchFilter && m.branchName !== filters.branchFilter) return false;
+            if (filters.officeFilter && m.officeName !== filters.officeFilter) return false;
+            return true;
+          }).length : 0
+        }`
+      ),
     ]),
 
     // FilterPanel 사용 (지사/지점/담당자 필터링)
