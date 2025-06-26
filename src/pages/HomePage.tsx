@@ -337,7 +337,18 @@ const HomePage = () => {
             ),
             React.createElement('div', { style: { fontSize: '12px', color: '#666' } }, '영업 상권')
           )
-        )
+        ),
+        // 통계 섹션 안에 테스트 추가
+        React.createElement('div', { 
+          style: { 
+            marginTop: '15px', 
+            padding: '10px', 
+            backgroundColor: 'red', 
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          } 
+        }, 'RTM 테스트 - 이게 보이나요?')
       ),
 
       // RTM 채널 필터 (단순 테스트)
