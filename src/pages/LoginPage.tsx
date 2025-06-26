@@ -91,7 +91,7 @@ const LoginPage = () => {
           },
           required: true,
           disabled: loading,
-          placeholder: '사번 또는 계정 입력'
+          placeholder: '계정 입력'
         })
       ),
       
