@@ -46,6 +46,11 @@ const PartnersPage = () => {
     loadUser()
   }, [])
 
+  // 필터 변경 핸들러 (HomePage와 동일)
+  const handleFilterChange = (key: keyof typeof filters, value: string | null) => {
+    updateFilter(key, value)
+  }
+
   // 거래처 데이터 가져오기 함수
   const fetchPartners = async () => {
     try {
@@ -375,11 +380,11 @@ const PartnersPage = () => {
       ),
     ]),
 
-    // FilterPanel 사용 (지사/지점/담당자 필터링) - 다른 페이지와 동일한 방식
+    // FilterPanel 사용 (HomePage/AreasPage와 완전히 동일한 방식)
     React.createElement(FilterPanel, {
       options,
       filters,
-      onFilterChange: updateFilter,
+      onFilterChange: handleFilterChange,
       onReset: resetFilters,
       onSearch: fetchPartners,
       loading: loading || filterLoading
