@@ -47,6 +47,7 @@ const PartnersPage = () => {
         const options = await partnerAPI.getFilterOptions()
         setFilterOptions(options)
         console.log('✅ 필터 옵션 로드 완료:', options)
+        console.log('📊 담당자 데이터 구조:', options.managers?.slice(0, 3))
         
       } catch (error) {
         console.error('사용자 정보 또는 필터 옵션 로드 실패:', error)
@@ -423,15 +424,22 @@ const PartnersPage = () => {
               React.createElement('option', { value: '' }, filterLoading ? '로딩 중...' : '전체'),
               ...(filterOptions?.managers || [])
                 .filter(manager => {
-                  // 지사 필터가 선택된 경우, 해당 지사에 속한 담당자만 표시
-                  if (selectedBranch && manager.branchName !== selectedBranch) {
-                    return false
-                  }
-                  // 지점 필터가 선택된 경우, 해당 지점에 속한 담당자만 표시
-                  if (selectedOffice && manager.officeName !== selectedOffice) {
-                    return false
-                  }
-                  return true
+                  // 디버깅: 필터 조건 확인
+                  const shouldInclude = (() => {
+                    // 지사 필터가 선택된 경우, 해당 지사에 속한 담당자만 표시
+                    if (selectedBranch && manager.branchName !== selectedBranch) {
+                      console.log(`❌ 담당자 ${manager.employeeName} 제외: 지사 불일치 (${manager.branchName} !== ${selectedBranch})`)
+                      return false
+                    }
+                    // 지점 필터가 선택된 경우, 해당 지점에 속한 담당자만 표시
+                    if (selectedOffice && manager.officeName !== selectedOffice) {
+                      console.log(`❌ 담당자 ${manager.employeeName} 제외: 지점 불일치 (${manager.officeName} !== ${selectedOffice})`)
+                      return false
+                    }
+                    console.log(`✅ 담당자 ${manager.employeeName} 포함: 지사=${manager.branchName}, 지점=${manager.officeName}`)
+                    return true
+                  })()
+                  return shouldInclude
                 })
                 .map(manager =>
                   React.createElement('option', { key: manager.employeeId, value: manager.employeeId },
