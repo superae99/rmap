@@ -224,15 +224,21 @@ const HomePage = () => {
 
   // 데이터는 조회 버튼 클릭 시에만 로드됨 (초기 자동 로딩 없음)
 
-  // 마커 데이터 변환 (유효한 좌표가 있는 거래처만)
+  // 마커 데이터 변환 (유효한 좌표가 있는 거래처만 + RTM 채널 필터링)
   const markers = partners
     .filter(partner => {
       const lat = Number(partner.latitude)
       const lng = Number(partner.longitude)
       // 한국 영역 내의 유효한 좌표인지 확인
-      return lat && lng && 
+      const validCoords = lat && lng && 
              lat >= 33 && lat <= 43 &&  // 한국 위도 범위
              lng >= 124 && lng <= 132   // 한국 경도 범위
+      
+      // RTM 채널 필터링
+      const rtmChannel = partner.rtmChannel || mapChannelToRTM(partner.channel)
+      const channelVisible = rtmChannelFilters[rtmChannel as keyof typeof rtmChannelFilters] !== false
+      
+      return validCoords && channelVisible
     })
     .map((partner, index) => {
       const managerColor = getManagerColor(partner.currentManagerName)
