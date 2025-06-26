@@ -102,14 +102,33 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
           return null
         }
         
+        // properties에서 실제 행정구역명 추출
+        const properties = typeof area.properties === 'string' 
+          ? JSON.parse(area.properties || '{}') 
+          : (area.properties || {})
+        
+        // name이 비어있으면 properties에서 행정구역명 가져오기
+        let displayName = area.name
+        if (!displayName || displayName.trim() === '') {
+          // properties에서 가능한 이름 필드들 확인
+          displayName = properties.ADM_NM || 
+                       properties.adm_nm ||
+                       properties.name ||
+                       properties.DONG_NM ||
+                       properties.dong_nm ||
+                       area.salesTerritory?.admNm ||
+                       `구역 ${area.admCd || area.id}`
+          
+          console.log(`🔍 행정구역명 복구: ${area.id} -> ${displayName}`)
+          console.log('📍 사용 가능한 properties:', Object.keys(properties))
+        }
+        
         return {
           id: area.admCd || area.id.toString(),
-          name: area.name,
+          name: displayName,
           admCd: area.admCd || '',
           coordinates,
-          properties: typeof area.properties === 'string' 
-            ? JSON.parse(area.properties || '{}') 
-            : (area.properties || {}),
+          properties,
           isActive: area.isActive, // isActive 필드 추가
           description: area.description,
           salesTerritory: area.salesTerritory // salesTerritory 정보 추가
