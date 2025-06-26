@@ -251,32 +251,6 @@ const HomePage = () => {
             
             <!-- 정보 항목들 -->
             <div style="space-y: 12px;">
-              ${partner.businessNumber ? `
-              <div style="
-                display: flex;
-                align-items: flex-start;
-                margin-bottom: 12px;
-              ">
-                <div style="
-                  width: 20px;
-                  height: 20px;
-                  background-color: #f0f4ff;
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  margin-right: 10px;
-                  flex-shrink: 0;
-                ">
-                  <span style="font-size: 12px;">🏢</span>
-                </div>
-                <div style="flex: 1;">
-                  <div style="font-size: 11px; color: #666; margin-bottom: 2px;">사업자등록번호</div>
-                  <div style="font-size: 13px; color: #333;">${partner.businessNumber}</div>
-                </div>
-              </div>
-              ` : ''}
-              
               ${partner.businessAddress ? `
               <div style="
                 display: flex;
@@ -297,8 +271,34 @@ const HomePage = () => {
                   <span style="font-size: 12px;">📍</span>
                 </div>
                 <div style="flex: 1;">
-                  <div style="font-size: 11px; color: #666; margin-bottom: 2px;">사업장주소</div>
+                  <div style="font-size: 11px; color: #666; margin-bottom: 2px;">주소</div>
                   <div style="font-size: 13px; color: #333; line-height: 1.4;">${partner.businessAddress}</div>
+                </div>
+              </div>
+              ` : ''}
+              
+              ${partner.officeName ? `
+              <div style="
+                display: flex;
+                align-items: flex-start;
+                margin-bottom: 12px;
+              ">
+                <div style="
+                  width: 20px;
+                  height: 20px;
+                  background-color: #f0f4ff;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-right: 10px;
+                  flex-shrink: 0;
+                ">
+                  <span style="font-size: 12px;">🏢</span>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 11px; color: #666; margin-bottom: 2px;">지점 정보</div>
+                  <div style="font-size: 13px; color: #333;">${partner.officeName}</div>
                 </div>
               </div>
               ` : ''}
@@ -322,7 +322,7 @@ const HomePage = () => {
                   <span style="font-size: 12px;">👤</span>
                 </div>
                 <div style="flex: 1;">
-                  <div style="font-size: 11px; color: #666; margin-bottom: 2px;">현재 담당자</div>
+                  <div style="font-size: 11px; color: #666; margin-bottom: 2px;">담당 정보</div>
                   <div style="font-size: 13px; color: #333; font-weight: 500;">${partner.currentManagerName || '미지정'}</div>
                   ${partner.previousManagerName ? `
                     <div style="font-size: 11px; color: #999; margin-top: 4px;">
