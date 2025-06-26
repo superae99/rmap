@@ -659,8 +659,23 @@ const AreasPage = () => {
           )
         ),
 
-        // 담당자 필터 (admin, 지점장 계정에 표시)
-        user && (user.account === 'admin' || user.jobTitle?.includes('시스템관리자') || user.jobTitle?.includes('지점장') || user.position?.includes('지점장')) && React.createElement('div', { style: { flex: '1', minWidth: '160px' } },
+        // 담당자 필터 (admin, 일반관리자, 지점장 계정에 표시)
+        user && (
+          user.account === 'admin' || 
+          user.jobTitle?.includes('시스템관리자') ||
+          user.position?.includes('본부장') || 
+          user.position?.includes('부문장') || 
+          user.position?.includes('팀장') || 
+          user.position?.includes('매니저') ||
+          user.jobTitle?.includes('본부장') || 
+          user.jobTitle?.includes('부문장') || 
+          user.jobTitle?.includes('팀장') || 
+          user.jobTitle?.includes('매니저') ||
+          user.fieldType === '스탭' ||
+          user.fieldType === 'STAFF' ||
+          user.jobTitle?.includes('지점장') || 
+          user.position?.includes('지점장')
+        ) && React.createElement('div', { style: { flex: '1', minWidth: '160px' } },
           React.createElement('label', 
             { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
             '담당자'
