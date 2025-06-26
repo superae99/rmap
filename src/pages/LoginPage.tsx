@@ -28,8 +28,8 @@ const LoginPage = () => {
     try {
       const response = await authAPI.login(account, password)
       console.log('로그인 성공:', response)
-      // 로그인 성공 시 홈페이지로 이동
-      window.location.href = '/'
+      // 로그인 성공 시 페이지 새로고침 (URL 변경 없이)
+      window.location.reload()
     } catch (err) {
       console.error('로그인 실패:', err)
       setError('계정 또는 비밀번호가 올바르지 않습니다.')

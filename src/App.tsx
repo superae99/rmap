@@ -56,24 +56,19 @@ function App() {
       
       setLoading(false);
 
-      // URL에서 현재 페이지 결정
-      const path = window.location.pathname;
-      if (path === '/partners') {
-        setCurrentPage('partners');
-      } else if (path === '/areas') {
-        setCurrentPage('areas');
-      } else {
-        setCurrentPage('home');
+      // URL을 항상 루트(/)로 유지
+      if (window.location.pathname !== '/') {
+        window.history.replaceState({}, '', '/');
       }
     };
 
     initializeApp();
   }, []);
 
-  // 페이지 변경 함수
+  // 페이지 변경 함수 (URL 변경 없이 상태만 변경)
   const navigateTo = (page: string) => {
     setCurrentPage(page);
-    window.history.pushState({}, '', page === 'home' ? '/' : `/${page}`);
+    // URL은 항상 루트(/)로 유지
   };
 
   // 로그아웃 함수
@@ -82,7 +77,7 @@ function App() {
     setIsAuthenticated(false);
     setUser(null);
     setCurrentPage('home');
-    window.history.pushState({}, '', '/login');
+    // URL은 항상 루트(/)로 유지
   };
 
   // 비밀번호 변경 모달 열기
@@ -151,10 +146,8 @@ function App() {
     }, '로딩 중...');
   }
 
-  // 간단한 라우팅 (react-router 없이)
-  const path = window.location.pathname;
-  
-  if (path === '/login' || !isAuthenticated) {
+  // 인증 상태만으로 페이지 결정 (URL 경로 무시)
+  if (!isAuthenticated) {
     return React.createElement(LoginPage);
   }
   
