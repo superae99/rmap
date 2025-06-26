@@ -342,6 +342,21 @@ const PartnersPage = () => {
       )
     ),
 
+    // 디버깅 정보 표시
+    React.createElement('div', {
+      style: {
+        padding: '10px',
+        backgroundColor: '#f0f0f0',
+        margin: '10px 0',
+        border: '1px solid #ccc',
+        fontSize: '12px'
+      }
+    }, [
+      React.createElement('div', { key: 'branch' }, `현재 지사: ${filters.branchFilter || '전체'}`),
+      React.createElement('div', { key: 'office' }, `현재 지점: ${filters.officeFilter || '전체'}`),
+      React.createElement('div', { key: 'manager' }, `현재 담당자: ${filters.managerFilter || '전체'}`),
+    ]),
+
     // FilterPanel 사용 (지사/지점/담당자 필터링)
     React.createElement(FilterPanel, {
       options,
@@ -349,7 +364,7 @@ const PartnersPage = () => {
       onFilterChange: updateFilter,
       onReset: resetFilters,
       onSearch: fetchPartners,
-      loading: filterLoading
+      loading: loading || filterLoading
     }),
 
     // 거래처 목록
