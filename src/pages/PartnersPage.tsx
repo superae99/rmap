@@ -343,7 +343,7 @@ const PartnersPage = () => {
     ),
 
     // FilterPanel 사용 (지사/지점/담당자 필터링)
-    options && React.createElement(FilterPanel, {
+    React.createElement(FilterPanel, {
       options,
       filters,
       onFilterChange: updateFilter,
