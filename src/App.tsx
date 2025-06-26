@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import PartnersPage from './pages/PartnersPage';
 import AreasPage from './pages/AreasPage';
+import MobileNavigation from './components/layout/MobileNavigation';
 import { authAPI } from './services/api';
 
 function App() {
@@ -18,6 +19,19 @@ function App() {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -276,6 +290,148 @@ function App() {
     }
   };
 
+  // 모바일인 경우 다른 레이아웃 사용
+  if (isMobile) {
+    return React.createElement('div',
+      { style: { minHeight: '100vh', backgroundColor: '#f5f5f5' } },
+      React.createElement(MobileNavigation, {
+        currentPage,
+        user,
+        onNavigate: navigateTo,
+        onLogout: handleLogout,
+        onPasswordChange: openPasswordModal
+      }),
+      React.createElement('div', 
+        { style: { paddingTop: '60px', paddingBottom: '80px' } },
+        renderCurrentPage()
+      ),
+      
+      // 비밀번호 변경 모달 (모바일용)
+      showPasswordModal && React.createElement('div',
+        {
+          style: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 3000,
+            padding: '20px'
+          }
+        },
+        React.createElement('div',
+          {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '20px',
+              width: '100%',
+              maxWidth: '350px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }
+          },
+          // 모바일 비밀번호 변경 폼 (간소화)
+          React.createElement('h3', { style: { margin: '0 0 20px 0', textAlign: 'center' } }, '🔑 비밀번호 변경'),
+          
+          React.createElement('input', {
+            type: 'password',
+            value: passwordForm.currentPassword,
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value }),
+            placeholder: '현재 비밀번호',
+            style: {
+              width: '100%',
+              padding: '12px',
+              marginBottom: '12px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '16px',
+              boxSizing: 'border-box'
+            }
+          }),
+          
+          React.createElement('input', {
+            type: 'password',
+            value: passwordForm.newPassword,
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPasswordForm({ ...passwordForm, newPassword: e.target.value }),
+            placeholder: '새 비밀번호 (최소 6자)',
+            style: {
+              width: '100%',
+              padding: '12px',
+              marginBottom: '12px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '16px',
+              boxSizing: 'border-box'
+            }
+          }),
+          
+          React.createElement('input', {
+            type: 'password',
+            value: passwordForm.confirmPassword,
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value }),
+            placeholder: '새 비밀번호 확인',
+            style: {
+              width: '100%',
+              padding: '12px',
+              marginBottom: '16px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '16px',
+              boxSizing: 'border-box'
+            }
+          }),
+          
+          passwordError && React.createElement('div',
+            { style: { color: '#ff6b6b', fontSize: '14px', marginBottom: '16px', textAlign: 'center' } },
+            passwordError
+          ),
+          
+          React.createElement('div', { style: { display: 'flex', gap: '10px' } },
+            React.createElement('button',
+              {
+                onClick: closePasswordModal,
+                style: {
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }
+              },
+              '취소'
+            ),
+            React.createElement('button',
+              {
+                onClick: handlePasswordChange,
+                disabled: passwordLoading,
+                style: {
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: passwordLoading ? '#ccc' : '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: passwordLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }
+              },
+              passwordLoading ? '변경 중...' : '변경'
+            )
+          )
+        )
+      )
+    );
+  }
+
+  // 데스크톱 레이아웃
   return React.createElement('div',
     { style: { minHeight: '100vh', backgroundColor: '#f5f5f5' } },
     renderNavigation(),

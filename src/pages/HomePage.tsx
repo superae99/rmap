@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import KakaoMap from '../components/map/KakaoMap'
 import { partnerAPI } from '../services/api'
 import { loadAreasData, type ProcessedArea } from '../services/areas-service'
@@ -43,9 +43,23 @@ const HomePage = () => {
     name: '',
     reason: ''
   })
+  const [isMobile, setIsMobile] = useState(false)
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
 
   // 새로운 필터링 시스템 사용
   const { options, filters, updateFilter, resetFilters } = useFilters()
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 담당자별 색상 생성 함수
   const getManagerColor = (managerName: string | null | undefined): string => {
@@ -450,6 +464,235 @@ const HomePage = () => {
     updateFilter(key, value)
   }
 
+  if (isMobile) {
+    // 모바일 레이아웃
+    return React.createElement('div', 
+      { style: { width: '100%', height: '100%', position: 'relative' } },
+      
+      // 모바일 지도 (전체 화면)
+      React.createElement('div',
+        { style: { width: '100%', height: '100vh', position: 'relative' } },
+        React.createElement(KakaoMap, {
+          width: '100%',
+          height: '100%',
+          markers: markers,
+          areas: showAreas ? mapAreas : [],
+          onMarkerClick: handleMarkerClick,
+          latitude: 37.5665,
+          longitude: 126.9780,
+          level: 8
+        })
+      ),
+
+      // 모바일 플로팅 액션 버튼
+      React.createElement('button',
+        {
+          onClick: () => setShowMobileFilters(true),
+          style: {
+            position: 'fixed',
+            bottom: '100px',
+            right: '20px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            backgroundColor: '#667eea',
+            border: 'none',
+            color: 'white',
+            fontSize: '24px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            zIndex: 500
+          }
+        },
+        '🔍'
+      ),
+
+      // 모바일 필터 하단 시트
+      showMobileFilters && React.createElement('div',
+        {
+          style: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1000
+          },
+          onClick: () => setShowMobileFilters(false)
+        }
+      ),
+
+      showMobileFilters && React.createElement('div',
+        {
+          style: {
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'white',
+            borderTopLeftRadius: '20px',
+            borderTopRightRadius: '20px',
+            padding: '20px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            zIndex: 1001
+          }
+        },
+        React.createElement('div',
+          { style: { 
+            width: '40px', 
+            height: '4px', 
+            backgroundColor: '#ddd', 
+            borderRadius: '2px', 
+            margin: '0 auto 20px',
+            cursor: 'pointer'
+          },
+          onClick: () => setShowMobileFilters(false) },
+        ),
+        React.createElement('h3', { style: { margin: '0 0 20px 0', textAlign: 'center' } }, '🔍 필터 및 설정'),
+        
+        // 필터 패널
+        React.createElement(FilterPanel, {
+          options,
+          filters,
+          onFilterChange: handleFilterChange,
+          onReset: resetFilters,
+          onSearch: handleSearch,
+          loading
+        }),
+
+        // 영역 표시 토글
+        React.createElement('div',
+          { style: { marginTop: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' } },
+          React.createElement('label',
+            { 
+              style: { 
+                display: 'flex', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                fontSize: '16px',
+                gap: '10px'
+              } 
+            },
+            React.createElement('input', {
+              type: 'checkbox',
+              checked: showAreas,
+              onChange: (e) => setShowAreas(e.target.checked),
+              style: { transform: 'scale(1.2)' }
+            }),
+            '🗺️ 영업구역 표시'
+          )
+        ),
+
+        // 통계 정보
+        partners.length > 0 && React.createElement('div',
+          { style: { marginTop: '20px', padding: '15px', backgroundColor: '#f0f4ff', borderRadius: '8px' } },
+          React.createElement('h4', { style: { margin: '0 0 10px 0', fontSize: '14px' } }, '📊 현재 필터 결과'),
+          React.createElement('div', { style: { fontSize: '14px', lineHeight: '1.6' } },
+            `• 거래처: ${partners.length}개`,
+            React.createElement('br'),
+            `• 담당자: ${new Set(partners.map(p => p.currentManagerName).filter(Boolean)).size}명`,
+            React.createElement('br'),
+            `• 영업구역: ${areas.length}개`
+          )
+        )
+      ),
+
+      // 모바일 파트너 상세 모달
+      selectedPartner && React.createElement('div',
+        {
+          style: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+            padding: '20px'
+          }
+        },
+        React.createElement('div',
+          {
+            style: {
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              width: '100%',
+              maxWidth: '400px',
+              maxHeight: '80vh',
+              overflowY: 'auto'
+            }
+          },
+          React.createElement('div',
+            { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' } },
+            React.createElement('h3', { style: { margin: 0, fontSize: '18px' } }, '🏢 거래처 정보'),
+            React.createElement('button',
+              {
+                onClick: () => setSelectedPartner(null),
+                style: {
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '0'
+                }
+              },
+              '×'
+            )
+          ),
+          
+          // 거래처 정보 표시 (모바일 최적화)
+          React.createElement('div', { style: { lineHeight: '1.6' } },
+            React.createElement('div', { style: { marginBottom: '15px' } },
+              React.createElement('strong', null, '거래처명: '),
+              selectedPartner.partnerName
+            ),
+            React.createElement('div', { style: { marginBottom: '15px' } },
+              React.createElement('strong', null, '코드: '),
+              selectedPartner.partnerCode
+            ),
+            React.createElement('div', { style: { marginBottom: '15px' } },
+              React.createElement('strong', null, '채널: '),
+              selectedPartner.channel || '기타'
+            ),
+            React.createElement('div', { style: { marginBottom: '15px' } },
+              React.createElement('strong', null, '담당자: '),
+              selectedPartner.currentManagerName || '미지정'
+            ),
+            selectedPartner.businessAddress && React.createElement('div', { style: { marginBottom: '15px' } },
+              React.createElement('strong', null, '주소: '),
+              selectedPartner.businessAddress
+            )
+          ),
+          
+          React.createElement('button',
+            {
+              onClick: () => setSelectedPartner(null),
+              style: {
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                marginTop: '20px'
+              }
+            },
+            '닫기'
+          )
+        )
+      )
+    );
+  }
+
+  // 데스크톱 레이아웃
   return React.createElement('div', 
     { style: { width: '100%', height: 'calc(100vh - 60px)', display: 'flex' } },
     

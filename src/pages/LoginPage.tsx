@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { authAPI } from '../services/api'
 
 const LoginPage = () => {
@@ -6,6 +6,19 @@ const LoginPage = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,18 +43,20 @@ const LoginPage = () => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      height: '100vh',
-      backgroundColor: '#f5f5f5'
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      padding: isMobile ? '20px' : '0'
     }
   },
     React.createElement('form', {
       onSubmit: handleSubmit,
       style: {
-        width: '400px',
-        padding: '40px',
+        width: isMobile ? '100%' : '400px',
+        maxWidth: isMobile ? '350px' : 'none',
+        padding: isMobile ? '30px 20px' : '40px',
         backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+        borderRadius: isMobile ? '12px' : '8px',
+        boxShadow: isMobile ? '0 4px 20px rgba(0,0,0,0.15)' : '0 2px 10px rgba(0,0,0,0.1)'
       }
     },
       React.createElement('h2', {
@@ -68,13 +83,15 @@ const LoginPage = () => {
           onChange: (e: any) => setAccount(e.target.value),
           style: {
             width: '100%',
-            padding: '10px',
+            padding: isMobile ? '14px 12px' : '10px',
             border: '1px solid #ddd',
-            borderRadius: '4px',
-            fontSize: '16px'
+            borderRadius: isMobile ? '8px' : '4px',
+            fontSize: '16px',
+            boxSizing: 'border-box'
           },
           required: true,
-          disabled: loading
+          disabled: loading,
+          placeholder: '사번 또는 계정 입력'
         })
       ),
       
@@ -88,13 +105,15 @@ const LoginPage = () => {
           onChange: (e: any) => setPassword(e.target.value),
           style: {
             width: '100%',
-            padding: '10px',
+            padding: isMobile ? '14px 12px' : '10px',
             border: '1px solid #ddd',
-            borderRadius: '4px',
-            fontSize: '16px'
+            borderRadius: isMobile ? '8px' : '4px',
+            fontSize: '16px',
+            boxSizing: 'border-box'
           },
           required: true,
-          disabled: loading
+          disabled: loading,
+          placeholder: '비밀번호 입력'
         })
       ),
       
@@ -102,13 +121,15 @@ const LoginPage = () => {
         type: 'submit',
         style: {
           width: '100%',
-          padding: '12px',
-          backgroundColor: loading ? '#6c757d' : '#007bff',
+          padding: isMobile ? '16px' : '12px',
+          backgroundColor: loading ? '#6c757d' : '#667eea',
           color: 'white',
           border: 'none',
-          borderRadius: '4px',
+          borderRadius: isMobile ? '8px' : '4px',
           fontSize: '16px',
-          cursor: loading ? 'not-allowed' : 'pointer'
+          fontWeight: 'bold',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          minHeight: isMobile ? '50px' : 'auto'
         },
         disabled: loading
       }, loading ? '로그인 중...' : '로그인'),
