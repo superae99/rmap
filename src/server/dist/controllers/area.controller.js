@@ -33,13 +33,43 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadTopoJSON = exports.deleteArea = exports.updateArea = exports.createArea = exports.getArea = exports.getAreasWithSalesTerritory = exports.getAreas = void 0;
+exports.uploadTopoJSON = exports.deleteArea = exports.updateArea = exports.createArea = exports.getArea = exports.getAreasWithPartnerCounts = exports.getAreasWithSalesTerritory = exports.getAreas = void 0;
 const database_1 = require("../config/database");
 const Area_1 = require("../models/Area");
 const SalesTerritory_1 = require("../models/SalesTerritory");
 const User_1 = require("../models/User");
+const Partner_1 = require("../models/Partner");
 const areaRepository = database_1.AppDataSource.getRepository(Area_1.Area);
 const salesTerritoryRepository = database_1.AppDataSource.getRepository(SalesTerritory_1.SalesTerritory);
+const partnerRepository = database_1.AppDataSource.getRepository(Partner_1.Partner);
+// Point-in-polygon 알고리즘 (서버용)
+const isPointInPolygon = (point, polygon) => {
+    if (!point || !polygon || polygon.length < 3) {
+        return false;
+    }
+    const [x, y] = point;
+    let inside = false;
+    // 좌표값 유효성 검사
+    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+        return false;
+    }
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        if (!polygon[i] || !polygon[j] || polygon[i].length < 2 || polygon[j].length < 2) {
+            continue;
+        }
+        const [xi, yi] = polygon[i];
+        const [xj, yj] = polygon[j];
+        // 좌표값 유효성 검사
+        if (typeof xi !== 'number' || typeof yi !== 'number' || typeof xj !== 'number' || typeof yj !== 'number' ||
+            isNaN(xi) || isNaN(yi) || isNaN(xj) || isNaN(yj)) {
+            continue;
+        }
+        if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+            inside = !inside;
+        }
+    }
+    return inside;
+};
 // 영역 목록 조회
 const getAreas = async (req, res) => {
     try {
@@ -201,6 +231,274 @@ const getAreasWithSalesTerritory = async (req, res) => {
     }
 };
 exports.getAreasWithSalesTerritory = getAreasWithSalesTerritory;
+// 영업구역과 연결된 영역 조회 + 거래처 수 계산 (서버사이드)
+const getAreasWithPartnerCounts = async (req, res) => {
+    console.log('🚀 새 엔드포인트 getAreasWithPartnerCounts 호출됨!');
+    try {
+        const { branchFilter, // 지사 필터 (partners와 동일)
+        officeFilter, // 지점 필터 (partners와 동일)
+        managerFilter // 담당 필터 (partners와 동일)
+         } = req.query;
+        // 토큰이 있는 경우 인증 시도 (선택적 인증)
+        if (req.headers.authorization) {
+            try {
+                const { authenticate } = await Promise.resolve().then(() => __importStar(require('../middlewares/auth.middleware')));
+                await new Promise((resolve, reject) => {
+                    authenticate(req, res, (err) => {
+                        if (err)
+                            reject(err);
+                        else
+                            resolve();
+                    });
+                });
+            }
+            catch (error) {
+                req.user = undefined;
+            }
+        }
+        // areas와 sales_territories를 조인하여 데이터 조회
+        const query = areaRepository
+            .createQueryBuilder('area')
+            .leftJoin(SalesTerritory_1.SalesTerritory, 'territory', 'territory.admCd = area.admCd')
+            .select([
+            'area.id',
+            'area.name',
+            'area.coordinates',
+            'area.topojson',
+            'area.color',
+            'area.strokeColor',
+            'area.strokeWeight',
+            'area.fillOpacity',
+            'area.description',
+            'area.admCd',
+            'area.properties',
+            'area.isActive',
+            'area.createdAt',
+            'area.updatedAt'
+        ])
+            .addSelect([
+            'territory.territoryId',
+            'territory.branchName',
+            'territory.officeName',
+            'territory.managerName',
+            'territory.managerEmployeeId',
+            'territory.sido',
+            'territory.gungu',
+            'territory.admNm'
+        ])
+            .where('1 = 1'); // 모든 영역을 가져오되, 담당자 여부로 활성 상태를 동적 결정
+        // 권한별 필터링 적용
+        if (req.user) {
+            const userPosition = req.user.position || '';
+            const userJobTitle = req.user.jobTitle || '';
+            const userAccount = req.user.account || '';
+            // admin 계정: 모든 필터 사용 가능
+            if (userAccount === 'admin' || userJobTitle.includes('시스템관리자')) {
+                // 지사 필터 적용
+                if (branchFilter) {
+                    query.andWhere('territory.branchName = :branchFilter', { branchFilter });
+                }
+                // 지점 필터 적용
+                if (officeFilter) {
+                    query.andWhere('territory.officeName = :officeFilter', { officeFilter });
+                }
+                // 담당 필터 적용
+                if (managerFilter) {
+                    query.andWhere('territory.managerEmployeeId = :managerFilter', { managerFilter });
+                }
+            }
+            // 지점장 계정: 해당 지점 소속만
+            else if (userPosition.includes('지점장') || userJobTitle.includes('지점장')) {
+                const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+                const currentUser = await userRepository.findOne({
+                    where: { employeeId: req.user.employeeId }
+                });
+                if (currentUser && currentUser.officeName) {
+                    query.andWhere('territory.officeName = :userOffice', {
+                        userOffice: currentUser.officeName
+                    });
+                    // 담당 필터가 있다면 추가 적용
+                    if (managerFilter) {
+                        query.andWhere('territory.managerEmployeeId = :managerFilter', { managerFilter });
+                    }
+                }
+            }
+            // 일반 사용자: 자신의 담당 영업구역만
+            else {
+                query.andWhere('territory.managerEmployeeId = :userEmployeeId', {
+                    userEmployeeId: req.user.employeeId
+                });
+            }
+        }
+        const areas = await query.getRawMany();
+        // 파트너 데이터 로드 (필터 적용)
+        const partnerQuery = partnerRepository
+            .createQueryBuilder('partner')
+            .leftJoin(User_1.User, 'manager', 'manager.employeeId = partner.currentManagerEmployeeId')
+            .select(['partner.*', 'manager.branchName', 'manager.officeName'])
+            .where('partner.isActive = :isActive', { isActive: true })
+            .andWhere('partner.latitude IS NOT NULL')
+            .andWhere('partner.longitude IS NOT NULL');
+        // 파트너에도 동일한 권한 필터링 적용
+        if (req.user) {
+            const userPosition = req.user.position || '';
+            const userJobTitle = req.user.jobTitle || '';
+            const userAccount = req.user.account || '';
+            // admin 계정: 모든 필터 사용 가능
+            if (userAccount === 'admin' || userJobTitle.includes('시스템관리자')) {
+                if (branchFilter) {
+                    partnerQuery.andWhere('manager.branchName = :branchFilter', { branchFilter });
+                }
+                if (officeFilter) {
+                    partnerQuery.andWhere('partner.officeName = :officeFilter', { officeFilter });
+                }
+                if (managerFilter) {
+                    partnerQuery.andWhere('partner.currentManagerEmployeeId = :managerFilter', { managerFilter });
+                }
+            }
+            // 지점장 계정: 해당 지점 소속만
+            else if (userPosition.includes('지점장') || userJobTitle.includes('지점장')) {
+                const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+                const currentUser = await userRepository.findOne({
+                    where: { employeeId: req.user.employeeId }
+                });
+                if (currentUser && currentUser.officeName) {
+                    partnerQuery.andWhere('manager.officeName = :userOffice', {
+                        userOffice: currentUser.officeName
+                    });
+                    if (managerFilter) {
+                        partnerQuery.andWhere('partner.currentManagerEmployeeId = :managerFilter', { managerFilter });
+                    }
+                }
+            }
+            // 일반 사용자: 자신의 담당 거래처만
+            else {
+                partnerQuery.andWhere('partner.currentManagerEmployeeId = :userEmployeeId', {
+                    userEmployeeId: req.user.employeeId
+                });
+            }
+        }
+        const partners = await partnerQuery.getRawMany();
+        console.log(`🏪 데이터베이스에서 로드된 거래처 수: ${partners.length}개`);
+        if (partners.length > 0) {
+            console.log('📍 첫 번째 거래처 샘플:', {
+                name: partners[0].partner_partnerName,
+                lat: partners[0].partner_latitude,
+                lng: partners[0].partner_longitude
+            });
+        }
+        // 중복 영역 제거 (같은 admCd는 첫 번째 담당자만 사용)
+        const uniqueAreas = new Map();
+        areas.forEach(row => {
+            const areaId = row.area_admCd || row.area_id;
+            if (!uniqueAreas.has(areaId)) {
+                uniqueAreas.set(areaId, row);
+            }
+        });
+        // 결과를 적절한 형태로 변환하고 거래처 수 계산
+        const formattedAreas = Array.from(uniqueAreas.values()).map(row => {
+            const area = {
+                id: row.area_id,
+                name: row.area_name,
+                coordinates: row.area_coordinates,
+                topojson: row.area_topojson,
+                color: row.area_color,
+                strokeColor: row.area_strokeColor,
+                strokeWeight: row.area_strokeWeight,
+                fillOpacity: row.area_fillOpacity,
+                description: row.area_description,
+                admCd: row.area_admCd,
+                properties: row.area_properties,
+                isActive: true,
+                salesTerritory: row.territory_territoryId ? {
+                    territoryId: row.territory_territoryId,
+                    branchName: row.territory_branchName,
+                    officeName: row.territory_officeName,
+                    managerName: row.territory_managerName,
+                    managerEmployeeId: row.territory_managerEmployeeId,
+                    sido: row.territory_sido,
+                    gungu: row.territory_gungu,
+                    admNm: row.territory_admNm
+                } : null
+            };
+            // 좌표 데이터 파싱
+            let coordinates = [];
+            try {
+                const coordsData = typeof area.coordinates === 'string'
+                    ? JSON.parse(area.coordinates)
+                    : area.coordinates;
+                if (Array.isArray(coordsData) && coordsData.length > 0) {
+                    // GeoJSON Polygon: [[[lng, lat], ...]] 형태인 경우 첫 번째 ring 사용
+                    if (Array.isArray(coordsData[0]) && Array.isArray(coordsData[0][0])) {
+                        coordinates = coordsData[0]; // 외부 ring만 사용
+                    }
+                    // GeoJSON LineString 또는 단순 배열: [[lng, lat], ...] 형태
+                    else if (Array.isArray(coordsData[0]) && typeof coordsData[0][0] === 'number') {
+                        coordinates = coordsData;
+                    }
+                }
+            }
+            catch (error) {
+                console.warn(`좌표 파싱 실패 for area ${area.id}:`, error);
+            }
+            // 이 영역 내에 있는 거래처 수 계산
+            let partnerCount = 0;
+            if (coordinates.length >= 3) {
+                const partnersInThisArea = partners.filter(partner => {
+                    if (!partner.partner_latitude || !partner.partner_longitude)
+                        return false;
+                    const point = [
+                        Number(partner.partner_longitude),
+                        Number(partner.partner_latitude)
+                    ];
+                    return isPointInPolygon(point, coordinates);
+                });
+                partnerCount = partnersInThisArea.length;
+                // 처음 3개 영역에 대해서만 상세 로그
+                if (row.area_id <= 3) {
+                    console.log(`🗺️ 영역 "${area.name}" 내 거래처 ${partnerCount}개 발견`);
+                    if (partnersInThisArea.length > 0) {
+                        console.log('   - 포함된 거래처들:', partnersInThisArea.slice(0, 3).map(p => ({
+                            name: p.partner_partnerName,
+                            lat: p.partner_latitude,
+                            lng: p.partner_longitude
+                        })));
+                    }
+                }
+            }
+            return {
+                ...area,
+                partnerCount,
+                coordinates // 파싱된 좌표도 반환
+            };
+        });
+        console.log(`🗺️ ${formattedAreas.length}개 영역 조회 완료, 총 ${partners.length}개 거래처로 계산`);
+        // 처음 3개 영역의 거래처 수 로그
+        formattedAreas.slice(0, 3).forEach((area, index) => {
+            console.log(`📊 영역 ${index + 1}: "${area.name}" - 거래처 ${area.partnerCount}개`);
+        });
+        // 디버깅을 위한 메타 정보 추가
+        const response = {
+            areas: formattedAreas,
+            meta: {
+                endpoint: 'with-partner-counts',
+                totalAreas: formattedAreas.length,
+                totalPartners: partners.length,
+                timestamp: new Date().toISOString(),
+                samplePartnerCounts: formattedAreas.slice(0, 3).map(a => ({
+                    name: a.name,
+                    partnerCount: a.partnerCount
+                }))
+            }
+        };
+        res.json(response);
+    }
+    catch (error) {
+        console.error('영역+거래처 수 조회 오류:', error);
+        res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    }
+};
+exports.getAreasWithPartnerCounts = getAreasWithPartnerCounts;
 // 영역 상세 조회
 const getArea = async (req, res) => {
     try {

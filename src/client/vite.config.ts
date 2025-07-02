@@ -18,9 +18,10 @@ export default defineConfig({
     host: 'localhost',
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'https://www.main-bvxea6i-fru7lrwunilmo.au.platformsh.site',
         changeOrigin: true,
-        secure: false,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
       },
     },
   },

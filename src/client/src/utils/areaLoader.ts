@@ -36,8 +36,11 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     const { config } = await import('../config/environment')
     const baseUrl = config.apiBaseUrl
     
-    // sales_territories와 조인된 데이터를 위해 with-sales-territory 엔드포인트 사용
-    const url = `${baseUrl}/areas/with-sales-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    // sales_territories와 조인된 데이터를 위해 with-partner-counts 엔드포인트 사용 (서버에서 거래처 수 계산)
+    const versionParam = `v=${Date.now()}`
+    const separator = queryParams.toString() ? '&' : '?'
+    const url = `${baseUrl}/areas/with-partner-counts${queryParams.toString() ? `?${queryParams.toString()}` : ''}${separator}${versionParam}`
+    console.log('📡 API 호출 URL:', url)
     
     // 헤더에 인증 토큰 추가 (있는 경우)
     const headers: HeadersInit = {}
