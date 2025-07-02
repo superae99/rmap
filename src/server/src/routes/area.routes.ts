@@ -3,6 +3,7 @@ import { authenticate, authorize } from '../middlewares/auth.middleware'
 import {
   getAreas,
   getAreasWithSalesTerritory,
+  getAreasWithPartnerCounts,
   getArea,
   createArea,
   updateArea,
@@ -15,6 +16,7 @@ const router = Router()
 // 영역 조회는 인증 없이 접근 가능 (하지만 필터는 인증된 사용자만)
 router.get('/', getAreas)
 router.get('/with-sales-territory', getAreasWithSalesTerritory)
+router.get('/with-partner-counts', getAreasWithPartnerCounts)
 router.get('/:id', getArea)
 
 // 영역 수정/삭제는 인증 필요

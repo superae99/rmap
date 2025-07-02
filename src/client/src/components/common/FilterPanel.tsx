@@ -8,6 +8,7 @@ interface FilterPanelProps {
   onReset: () => void
   onSearch: () => void
   loading?: boolean
+  user?: any // 사용자 정보 추가
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -16,7 +17,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onFilterChange,
   onReset,
   onSearch,
-  loading = false
+  loading = false,
+  user
 }) => {
   
   if (loading || !options) {
@@ -28,6 +30,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   }
 
   const hasAnyFilter = Object.values(filters).some(value => value && value !== '')
+
+  // 지점장 권한 체크
+  const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
 
   // 선택된 지사에 따른 지점 필터링
   const filteredOffices = filters.branchFilter 
@@ -66,8 +71,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       <div className="filter-controls">
-        {/* 지사 필터 - admin만 사용 가능 */}
-        {options.branches.length > 0 && (
+        {/* 지사 필터 - 지점장에게는 숨김 */}
+        {!isBranchManager && options.branches.length > 0 && (
           <div className="filter-group">
             <label>지사</label>
             <select
@@ -84,8 +89,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
         )}
 
-        {/* 지점 필터 - admin만 사용 가능 */}
-        {options.offices.length > 0 && (
+        {/* 지점 필터 - 지점장에게는 숨김 */}
+        {!isBranchManager && options.offices.length > 0 && (
           <div className="filter-group">
             <label>지점</label>
             <select
@@ -140,7 +145,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           }}
           disabled={loading}
         >
-          {loading ? '조회 중...' : '🔍 거래처 조회'}
+          {loading ? '조회 중...' : '거래처 조회'}
         </button>
       </div>
 
