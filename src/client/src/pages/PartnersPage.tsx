@@ -50,6 +50,9 @@ const PartnersPage = () => {
     loadUser()
   }, [])
 
+  // 지점장 권한 체크
+  const isBranchManager = user?.jobTitle === '지점장' || user?.assignment === '지점장'
+
   // 필터 변경 핸들러 (HomePage와 동일)
   const handleFilterChange = (key: keyof typeof filters, value: string | null) => {
     updateFilter(key, value)
@@ -179,11 +182,9 @@ const PartnersPage = () => {
       setUploading(true)
       setUploadResult(null)
 
-      console.log('📤 Excel 파일 읽기 시작...')
       setUploadMessage('Excel 파일을 읽는 중...')
       const partners = await readPartnersFromExcel(file)
       
-      console.log(`🔄 ${partners.length}개 거래처 데이터로 전체 교체 시작...`)
       setUploadMessage(`${partners.length}개 거래처 데이터 업로드 준비 완료`)
       
       const result = await partnerAPI.replaceAll(partners, (progress, message) => {
@@ -200,8 +201,6 @@ const PartnersPage = () => {
           fetchPartners()
         }
       }
-      
-      console.log('✅ 거래처 전체 교체 완료:', result)
     } catch (error) {
       console.error('거래처 전체 교체 실패:', error)
       alert(`❌ 업로드 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
@@ -434,8 +433,8 @@ const PartnersPage = () => {
             })
           ),
 
-          // 지사 필터
-          React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
+          // 지사 필터 (지점장이 아닐 때만 표시)
+          !isBranchManager && React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '지사'
@@ -460,8 +459,8 @@ const PartnersPage = () => {
             )
           ),
 
-          // 지점 필터
-          React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
+          // 지점 필터 (지점장이 아닐 때만 표시)
+          !isBranchManager && React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '지점'

@@ -215,10 +215,8 @@ const HomePage = () => {
           const userData = await authAPI.getProfile()
           if (userData) {
             validToken = token
-            console.log('🔍 HomePage 로그인된 사용자로 영역 조회:', userData.account)
           }
         } catch (error) {
-          console.log('🔍 HomePage 로그인하지 않은 상태로 영역 조회')
           localStorage.removeItem('token')
         }
       }
@@ -334,7 +332,7 @@ const HomePage = () => {
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(102, 126, 234, 0.3)';"
                     title="담당자 변경"
                   >
-                    👤 담당자 변경
+                    담당자 변경
                   </button>
                 </div>
               </div>
@@ -426,7 +424,7 @@ const HomePage = () => {
         backgroundColor: '#f8f9fa',
         overflowY: 'auto'
       } },
-      React.createElement('h2', { style: { margin: '0 0 20px 0' } }, '🏢 영업 상권 관리'),
+      React.createElement('h2', { style: { margin: '0 0 20px 0' } }, '영업 상권 관리'),
       React.createElement('p', { style: { color: '#666', marginBottom: '20px' } }, 
         '영업 담당자별 상권 지역을 지도에서 확인하세요'
       ),
@@ -450,7 +448,7 @@ const HomePage = () => {
           marginBottom: '20px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         } },
-        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '📊 현재 통계'),
+        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '현재 통계'),
         React.createElement('div', { style: { display: 'flex', gap: '10px' } },
           React.createElement('div', { style: { flex: 1, textAlign: 'center' } },
             React.createElement('div', { style: { fontSize: '20px', fontWeight: 'bold', color: '#667eea' } }, 
@@ -478,7 +476,7 @@ const HomePage = () => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
           } 
         },
-        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px' } }, '📍 RTM 채널별 마커'),
+        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px' } }, 'RTM 채널별 마커'),
         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' } },
           // 업소 채널 (네모)
           React.createElement('label', 
@@ -563,7 +561,7 @@ const HomePage = () => {
       // 영역 표시 토글
       React.createElement('div',
         { style: { backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px' } },
-        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px' } }, '🗺️ 지도 설정'),
+        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px' } }, '지도 설정'),
         React.createElement('label',
           { 
             style: { 
@@ -594,7 +592,7 @@ const HomePage = () => {
         { style: { backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px' } },
         React.createElement('div', 
           { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' } },
-          React.createElement('h3', { style: { margin: '0', fontSize: '16px' } }, '👥 담당별 마커 색상'),
+          React.createElement('h3', { style: { margin: '0', fontSize: '16px' } }, '담당별 마커 색상'),
           !loading && partners.length > 0 && (() => {
             const totalManagers = partners.map(p => p.currentManagerEmployeeId).filter((v, i, arr) => v && arr.indexOf(v) === i).length
             return totalManagers > 8 ? React.createElement('button',
@@ -730,7 +728,7 @@ const HomePage = () => {
           ),
         React.createElement('div', 
           { style: { fontSize: '10px', color: '#888', marginTop: '8px', borderTop: '1px solid #f0f0f0', paddingTop: '8px' } },
-          '💡 색상을 클릭하면 수동으로 변경할 수 있습니다. ↺ 버튼으로 기본 색상 복원 가능'
+          '색상을 클릭하면 수동으로 변경할 수 있습니다. ↺ 버튼으로 기본 색상 복원 가능'
         )
       )
     ),

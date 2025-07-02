@@ -140,7 +140,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           }}
           disabled={loading}
         >
-          {loading ? '조회 중...' : '🔍 거래처 조회'}
+          {loading ? '조회 중...' : '거래처 조회'}
         </button>
       </div>
 

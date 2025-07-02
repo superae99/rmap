@@ -69,64 +69,31 @@ const AreasPage = () => {
   const [allPartners, setAllPartners] = useState<Partner[]>([])
   const [hasSearched, setHasSearched] = useState(false)
   const [partnersLoading, setPartnersLoading] = useState(false)
+  const [userInfo, setUserInfo] = useState<any>(null)
   
   // useFilters 훅 사용 (홈화면과 동일)
   const { options, filters, updateFilter, resetFilters } = useFilters()
 
-
-  // 거래처 데이터를 페이지네이션으로 전체 로드하는 함수
-  const loadAllPartners = async () => {
-    try {
-      setPartnersLoading(true)
-      
-      let allValidPartners: Partner[] = []
-      let page = 1
-      let hasMore = true
-      
-      console.log('거래처 데이터 페이지네이션 로드 시작...')
-      
-      while (hasMore) {
-        const partnersResponse = await partnerAPI.getPartners({ 
-          page,
-          limit: 1000 // 페이지당 1000개씩 로드
-        })
-        
-        const partnersData = partnersResponse.partners || partnersResponse
-        
-        if (!Array.isArray(partnersData) || partnersData.length === 0) {
-          hasMore = false
-          break
+  // 사용자 정보 로드
+  React.useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const { authAPI } = await import('../services/api')
+        const userData = await authAPI.getProfile()
+        if (userData) {
+          setUserInfo(userData)
         }
-        
-        // 유효한 좌표가 있는 거래처만 필터링
-        const validPartners = partnersData.filter(partner => {
-          const lat = Number(partner.latitude)
-          const lng = Number(partner.longitude)
-          return lat && lng && 
-                 lat >= 33 && lat <= 43 &&  // 한국 위도 범위
-                 lng >= 124 && lng <= 132   // 한국 경도 범위
-        })
-        
-        allValidPartners = [...allValidPartners, ...validPartners]
-        
-        
-        // 다음 페이지가 있는지 확인
-        if (partnersData.length < 1000) {
-          hasMore = false
-        } else {
-          page++
-        }
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error)
       }
-      
-      setAllPartners(allValidPartners)
-      
-    } catch (error) {
-      console.error('거래처 데이터 로드 실패:', error)
-      setAllPartners([])
-    } finally {
-      setPartnersLoading(false)
     }
-  }
+    fetchUserInfo()
+  }, [])
+
+  // 지점장 권한 체크
+  const isBranchManager = userInfo?.jobTitle === '지점장' || userInfo?.assignment === '지점장'
+
+
 
   // 로딩 상태 메시지 컴포넌트
   const [loadingMessage, setLoadingMessage] = useState('')
@@ -490,8 +457,8 @@ const AreasPage = () => {
           })
         ),
 
-        // 지사 필터
-        React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
+        // 지사 필터 (지점장이 아닐 때만 표시)
+        !isBranchManager && React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
           React.createElement('label', 
             { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
             '지사'
@@ -516,8 +483,8 @@ const AreasPage = () => {
           )
         ),
 
-        // 지점 필터
-        React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
+        // 지점 필터 (지점장이 아닐 때만 표시)
+        !isBranchManager && React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
           React.createElement('label', 
             { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
             '지점'

@@ -179,7 +179,7 @@ function App() {
           { style: { display: 'flex', alignItems: 'center', gap: '30px' } },
           React.createElement('h1',
             { style: { margin: 0, color: 'white', fontSize: '20px' } },
-            '🗺️ 영업 상권 정보 시스템'
+            '영업 상권 정보 시스템'
           ),
           React.createElement('div',
             { style: { display: 'flex', gap: '20px' } },
@@ -196,7 +196,7 @@ function App() {
                   fontSize: '14px'
                 }
               },
-              '🏠 홈'
+              '홈'
             ),
             React.createElement('button',
               {
@@ -211,7 +211,7 @@ function App() {
                   fontSize: '14px'
                 }
               },
-              '🏢 거래처 관리'
+              '거래처 관리'
             ),
             React.createElement('button',
               {
@@ -226,7 +226,7 @@ function App() {
                   fontSize: '14px'
                 }
               },
-              '🗺️ 상권 관리'
+              '상권 관리'
             )
           )
         ),
@@ -246,13 +246,13 @@ function App() {
                 background: 'rgba(255,255,255,0.15)',
                 border: '1px solid rgba(255,255,255,0.3)',
                 color: 'white',
-                padding: '6px 12px',
+                padding: '8px 16px',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '13px'
+                fontSize: '14px'
               }
             },
-            '🔑 비밀번호 변경'
+            '비밀번호 변경'
           ),
           // 로그아웃 버튼
           React.createElement('button',
@@ -268,7 +268,7 @@ function App() {
                 fontSize: '14px'
               }
             },
-            '🚪 로그아웃'
+            '로그아웃'
           )
         )
       )
@@ -331,7 +331,7 @@ function App() {
             }
           },
           // 모바일 비밀번호 변경 폼 (간소화)
-          React.createElement('h3', { style: { margin: '0 0 20px 0', textAlign: 'center' } }, '🔑 비밀번호 변경'),
+          React.createElement('h3', { style: { margin: '0 0 20px 0', textAlign: 'center' } }, '비밀번호 변경'),
           
           React.createElement('input', {
             type: 'password',
@@ -461,7 +461,7 @@ function App() {
         },
         React.createElement('div',
           { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' } },
-          React.createElement('h3', { style: { margin: 0 } }, '🔑 비밀번호 변경'),
+          React.createElement('h3', { style: { margin: 0 } }, '비밀번호 변경'),
           React.createElement('button',
             {
               onClick: closePasswordModal,

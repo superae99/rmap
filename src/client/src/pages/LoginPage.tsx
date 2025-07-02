@@ -26,8 +26,7 @@ const LoginPage = () => {
     setLoading(true)
 
     try {
-      const response = await authAPI.login(account, password)
-      console.log('로그인 성공:', response)
+      await authAPI.login(account, password)
       // 로그인 성공 시 페이지 새로고침 (URL 변경 없이)
       window.location.reload()
     } catch (err) {
