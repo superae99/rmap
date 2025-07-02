@@ -30,7 +30,9 @@ const allowedOrigins = [
   'http://localhost:4000', // Client dev server
   'http://localhost:4001', // Client dev server (alternative port)
   'http://localhost:5173', // Vite dev server
-  process.env.CORS_ORIGIN, // Production Netlify URL
+  'https://r0map.netlify.app', // Production Netlify URL
+  'https://main-bvxea6i-fru7lrwunilmo.au.platformsh.site', // Alternative production URL
+  process.env.CORS_ORIGIN, // Additional production Netlify URL
 ].filter(Boolean)
 
 app.use(cors({
@@ -38,13 +40,20 @@ app.use(cors({
     // Allow requests with no origin (mobile apps, etc.)
     if (!origin) return callback(null, true)
     
-    if (allowedOrigins.includes(origin)) {
+    // Allow all netlify and platformsh domains in development
+    if (process.env.NODE_ENV === 'development' || 
+        origin.includes('netlify.app') || 
+        origin.includes('platformsh.site') ||
+        allowedOrigins.includes(origin)) {
       return callback(null, true)
     }
     
+    console.log('CORS blocked origin:', origin)
     callback(new Error('Not allowed by CORS'))
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

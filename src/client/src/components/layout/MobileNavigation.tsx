@@ -18,9 +18,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const [menuOpen, setMenuOpen] = useState(false)
 
   const navItems = [
-    { id: 'home', icon: '🏠', label: '홈' },
-    { id: 'partners', icon: '🏢', label: '거래처' },
-    { id: 'areas', icon: '🗺️', label: '상권' }
+    { id: 'home', icon: '', label: '홈' },
+    { id: 'partners', icon: '', label: '거래처' },
+    { id: 'areas', icon: '', label: '상권' }
   ]
 
   const toggleMenu = () => setMenuOpen(!menuOpen)
@@ -51,7 +51,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
           }}>
-            📱 상권정보
+            상권정보
           </h1>
         </div>
         
@@ -69,7 +69,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             minHeight: '40px'
           }}
         >
-          {menuOpen ? '✕' : '☰'}
+          {menuOpen ? '×' : '≡'}
         </button>
       </header>
 
@@ -122,7 +122,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 padding: '4px'
               }}
             >
-              ✕
+              ×
             </button>
           </div>
           {user && (
@@ -159,7 +159,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 borderLeft: currentPage === item.id ? '4px solid #667eea' : '4px solid transparent'
               }}
             >
-              <span style={{ fontSize: '20px' }}>{item.icon}</span>
               {item.label}
             </button>
           ))}
@@ -188,7 +187,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               justifyContent: 'center'
             }}
           >
-            🔑 비밀번호 변경
+            비밀번호 변경
           </button>
           
           <button
@@ -211,7 +210,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               justifyContent: 'center'
             }}
           >
-            🚪 로그아웃
+            로그아웃
           </button>
         </div>
       </div>
@@ -248,12 +247,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             }}
           >
             <span style={{ 
-              fontSize: '20px',
-              filter: currentPage === item.id ? 'none' : 'grayscale(0.5)'
+              fontWeight: currentPage === item.id ? 'bold' : 'normal',
+              fontSize: '12px'
             }}>
-              {item.icon}
-            </span>
-            <span style={{ fontWeight: currentPage === item.id ? 'bold' : 'normal' }}>
               {item.label}
             </span>
           </button>

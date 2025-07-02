@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import KakaoMap from '../components/map/KakaoMap'
 import FilterPanel from '../components/common/FilterPanel'
 import { useFilters } from '../hooks/useFilters'
-import { partnerAPI } from '../services/api'
+import { partnerAPI, authAPI } from '../services/api'
 import { loadAreasData } from '../utils/areaLoader'
 
 interface Partner {
@@ -53,6 +53,7 @@ const HomePage = () => {
   const [availableManagers, setAvailableManagers] = useState<any[]>([])
   const [showAllManagers, setShowAllManagers] = useState(false)
   const [customManagerColors, setCustomManagerColors] = useState<{[key: string]: string}>({})
+  const [user, setUser] = useState<any>(null)
 
   // RTM 채널 필터 상태 (기본적으로 모든 채널 표시)
   const [rtmChannelFilters, setRtmChannelFilters] = useState({
@@ -64,6 +65,26 @@ const HomePage = () => {
 
   // 새로운 필터링 시스템 사용
   const { options, filters, updateFilter, resetFilters } = useFilters()
+
+  // 사용자 정보 로드
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          return
+        }
+
+        const userData = await authAPI.getProfile()
+        setUser(userData)
+        
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error)
+      }
+    }
+
+    loadUser()
+  }, [])
 
 
   // 매니저 기반 마커 및 영역 색상 함수 (통일된 색상)
@@ -174,7 +195,7 @@ const HomePage = () => {
     
     // 처음 몇 개의 채널만 로그 출력 (디버깅용)
     if (!channelMapping[normalizedChannel] && normalizedChannel) {
-      console.warn(`⚠️ 매핑되지 않은 채널: "${normalizedChannel}" → 기본값 "업소" 사용`)
+      console.warn(`매핑되지 않은 채널: "${normalizedChannel}" → 기본값 "업소" 사용`)
     }
     
     return rtmChannel
@@ -317,7 +338,7 @@ const HomePage = () => {
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(102, 126, 234, 0.3)';"
                     title="담당자 변경"
                   >
-                    👤 담당자 변경
+                    담당자 변경
                   </button>
                 </div>
               </div>
@@ -403,13 +424,13 @@ const HomePage = () => {
     // 왼쪽 사이드바
     React.createElement('aside', 
       { style: { 
-        width: '350px', 
+        width: '400px', 
         borderRight: '1px solid #ddd', 
-        padding: '15px',
+        padding: '20px',
         backgroundColor: '#f8f9fa',
         overflowY: 'auto'
       } },
-      React.createElement('h2', { style: { margin: '0 0 20px 0' } }, '🏢 영업 상권 관리'),
+      React.createElement('h2', { style: { margin: '0 0 20px 0' } }, '영업 상권 관리'),
       React.createElement('p', { style: { color: '#666', marginBottom: '20px' } }, 
         '영업 담당자별 상권 지역을 지도에서 확인하세요'
       ),
@@ -421,7 +442,8 @@ const HomePage = () => {
         onFilterChange: handleFilterChange,
         onReset: resetFilters,
         onSearch: handleSearch,
-        loading
+        loading,
+        user
       }),
       
       // 통계 정보
@@ -433,7 +455,7 @@ const HomePage = () => {
           marginBottom: '20px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         } },
-        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '📊 현재 통계'),
+        React.createElement('h3', { style: { margin: '0 0 10px 0', fontSize: '16px' } }, '현재 통계'),
         React.createElement('div', { style: { display: 'flex', gap: '10px' } },
           React.createElement('div', { style: { flex: 1, textAlign: 'center' } },
             React.createElement('div', { style: { fontSize: '20px', fontWeight: 'bold', color: '#667eea' } }, 
@@ -450,125 +472,432 @@ const HomePage = () => {
         )
       ),
 
-      // RTM 채널 필터
+      // RTM 채널 필터 - 시각적 개선
       React.createElement('div', 
         { 
           style: { 
             backgroundColor: 'white', 
-            padding: '15px', 
-            borderRadius: '8px', 
+            padding: '20px', 
+            borderRadius: '12px', 
             marginBottom: '20px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            border: '1px solid rgba(102, 126, 234, 0.1)'
           } 
         },
-        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px' } }, '📍 RTM 채널별 마커'),
-        React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' } },
-          // 업소 채널 (네모)
-          React.createElement('label', 
-            { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['업소'],
-              onChange: () => toggleRtmChannel('업소')
-            }),
+        React.createElement('div',
+          { style: { display: 'flex', alignItems: 'center', marginBottom: '18px' } },
+          React.createElement('div',
+            { 
+              style: { 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                backgroundColor: '#667eea',
+                marginRight: '10px'
+              } 
+            }
+          ),
+          React.createElement('h3', { 
+            style: { 
+              margin: '0', 
+              fontSize: '16px', 
+              fontWeight: '600',
+              color: '#2d3748',
+              letterSpacing: '-0.02em'
+            } 
+          }, 'RTM 채널별 마커')
+        ),
+        React.createElement('div', { 
+          style: { 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '14px' 
+          } 
+        },
+          // 업소 채널 (네모) - 향상된 디자인
+          React.createElement('div',
+            {
+              onClick: () => toggleRtmChannel('업소'),
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 18px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                backgroundColor: rtmChannelFilters['업소'] ? '#f7fafc' : '#fafafa',
+                border: `2px solid ${rtmChannelFilters['업소'] ? '#667eea' : '#e2e8f0'}`,
+                transition: 'all 0.2s ease',
+                userSelect: 'none'
+              },
+              onMouseEnter: (e: any) => {
+                if (!rtmChannelFilters['업소']) {
+                  e.target.style.backgroundColor = '#f8f9fa'
+                  e.target.style.borderColor = '#cbd5e0'
+                }
+              },
+              onMouseLeave: (e: any) => {
+                if (!rtmChannelFilters['업소']) {
+                  e.target.style.backgroundColor = '#fafafa'
+                  e.target.style.borderColor = '#e2e8f0'
+                }
+              }
+            },
             React.createElement('div', { 
               style: { 
-                width: '12px', 
-                height: '12px', 
-                backgroundColor: '#000', 
-                border: '1px solid #333'
+                width: '16px', 
+                height: '16px', 
+                backgroundColor: rtmChannelFilters['업소'] ? '#667eea' : '#a0aec0', 
+                border: `2px solid ${rtmChannelFilters['업소'] ? '#667eea' : '#cbd5e0'}`,
+                borderRadius: '2px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               } 
-            }),
-            React.createElement('span', { style: { fontSize: '14px' } }, '업소')
+            },
+              rtmChannelFilters['업소'] && React.createElement('div', {
+                style: {
+                  width: '6px',
+                  height: '6px',
+                  backgroundColor: 'white',
+                  borderRadius: '1px'
+                }
+              })
+            ),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '14px', 
+                fontWeight: '500',
+                color: rtmChannelFilters['업소'] ? '#2d3748' : '#718096'
+              } 
+            }, '업소'),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '12px', 
+                color: '#a0aec0',
+                marginLeft: 'auto',
+                fontWeight: '500'
+              } 
+            }, partners.filter(p => (p.rtmChannel || mapChannelToRTM(p.channel)) === '업소').length)
           ),
-          // 매장 채널 (동그라미)
-          React.createElement('label', 
-            { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['매장'],
-              onChange: () => toggleRtmChannel('매장')
-            }),
+          
+          // 매장 채널 (동그라미) - 향상된 디자인
+          React.createElement('div',
+            {
+              onClick: () => toggleRtmChannel('매장'),
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 18px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                backgroundColor: rtmChannelFilters['매장'] ? '#f0fff4' : '#fafafa',
+                border: `2px solid ${rtmChannelFilters['매장'] ? '#48bb78' : '#e2e8f0'}`,
+                transition: 'all 0.2s ease',
+                userSelect: 'none'
+              },
+              onMouseEnter: (e: any) => {
+                if (!rtmChannelFilters['매장']) {
+                  e.target.style.backgroundColor = '#f8f9fa'
+                  e.target.style.borderColor = '#cbd5e0'
+                }
+              },
+              onMouseLeave: (e: any) => {
+                if (!rtmChannelFilters['매장']) {
+                  e.target.style.backgroundColor = '#fafafa'
+                  e.target.style.borderColor = '#e2e8f0'
+                }
+              }
+            },
             React.createElement('div', { 
               style: { 
-                width: '12px', 
-                height: '12px', 
-                backgroundColor: '#000', 
-                border: '1px solid #333',
-                borderRadius: '50%'
+                width: '16px', 
+                height: '16px', 
+                backgroundColor: rtmChannelFilters['매장'] ? '#48bb78' : '#a0aec0', 
+                border: `2px solid ${rtmChannelFilters['매장'] ? '#48bb78' : '#cbd5e0'}`,
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               } 
-            }),
-            React.createElement('span', { style: { fontSize: '14px' } }, '매장')
+            },
+              rtmChannelFilters['매장'] && React.createElement('div', {
+                style: {
+                  width: '6px',
+                  height: '6px',
+                  backgroundColor: 'white',
+                  borderRadius: '50%'
+                }
+              })
+            ),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '14px', 
+                fontWeight: '500',
+                color: rtmChannelFilters['매장'] ? '#2d3748' : '#718096'
+              } 
+            }, '매장'),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '12px', 
+                color: '#a0aec0',
+                marginLeft: 'auto',
+                fontWeight: '500'
+              } 
+            }, partners.filter(p => (p.rtmChannel || mapChannelToRTM(p.channel)) === '매장').length)
           ),
-          // 스피리츠 채널 (다이아몬드)
-          React.createElement('label', 
-            { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['스피리츠'],
-              onChange: () => toggleRtmChannel('스피리츠')
-            }),
+          
+          // 스피리츠 채널 (다이아몬드) - 향상된 디자인
+          React.createElement('div',
+            {
+              onClick: () => toggleRtmChannel('스피리츠'),
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 18px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                backgroundColor: rtmChannelFilters['스피리츠'] ? '#fef5e7' : '#fafafa',
+                border: `2px solid ${rtmChannelFilters['스피리츠'] ? '#ed8936' : '#e2e8f0'}`,
+                transition: 'all 0.2s ease',
+                userSelect: 'none'
+              },
+              onMouseEnter: (e: any) => {
+                if (!rtmChannelFilters['스피리츠']) {
+                  e.target.style.backgroundColor = '#f8f9fa'
+                  e.target.style.borderColor = '#cbd5e0'
+                }
+              },
+              onMouseLeave: (e: any) => {
+                if (!rtmChannelFilters['스피리츠']) {
+                  e.target.style.backgroundColor = '#fafafa'
+                  e.target.style.borderColor = '#e2e8f0'
+                }
+              }
+            },
             React.createElement('div', { 
               style: { 
-                width: '12px', 
-                height: '12px', 
-                backgroundColor: '#000', 
-                border: '1px solid #333',
-                transform: 'rotate(45deg)'
+                width: '16px', 
+                height: '16px', 
+                backgroundColor: rtmChannelFilters['스피리츠'] ? '#ed8936' : '#a0aec0', 
+                border: `2px solid ${rtmChannelFilters['스피리츠'] ? '#ed8936' : '#cbd5e0'}`,
+                borderRadius: '2px',
+                transform: 'rotate(45deg)',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               } 
-            }),
-            React.createElement('span', { style: { fontSize: '14px' } }, '스피리츠')
+            },
+              rtmChannelFilters['스피리츠'] && React.createElement('div', {
+                style: {
+                  width: '6px',
+                  height: '6px',
+                  backgroundColor: 'white',
+                  borderRadius: '1px',
+                  transform: 'rotate(-45deg)'
+                }
+              })
+            ),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '14px', 
+                fontWeight: '500',
+                color: rtmChannelFilters['스피리츠'] ? '#2d3748' : '#718096'
+              } 
+            }, '스피리츠'),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '12px', 
+                color: '#a0aec0',
+                marginLeft: 'auto',
+                fontWeight: '500'
+              } 
+            }, partners.filter(p => (p.rtmChannel || mapChannelToRTM(p.channel)) === '스피리츠').length)
           ),
-          // KA 채널 (삼각형)
-          React.createElement('label', 
-            { style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } },
-            React.createElement('input', {
-              type: 'checkbox',
-              checked: rtmChannelFilters['KA'],
-              onChange: () => toggleRtmChannel('KA')
-            }),
+          
+          // KA 채널 (삼각형) - 향상된 디자인
+          React.createElement('div',
+            {
+              onClick: () => toggleRtmChannel('KA'),
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '14px 18px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                backgroundColor: rtmChannelFilters['KA'] ? '#f7fafc' : '#fafafa',
+                border: `2px solid ${rtmChannelFilters['KA'] ? '#805ad5' : '#e2e8f0'}`,
+                transition: 'all 0.2s ease',
+                userSelect: 'none'
+              },
+              onMouseEnter: (e: any) => {
+                if (!rtmChannelFilters['KA']) {
+                  e.target.style.backgroundColor = '#f8f9fa'
+                  e.target.style.borderColor = '#cbd5e0'
+                }
+              },
+              onMouseLeave: (e: any) => {
+                if (!rtmChannelFilters['KA']) {
+                  e.target.style.backgroundColor = '#fafafa'
+                  e.target.style.borderColor = '#e2e8f0'
+                }
+              }
+            },
             React.createElement('div', { 
               style: { 
                 width: '0', 
                 height: '0', 
-                borderLeft: '6px solid transparent',
-                borderRight: '6px solid transparent',
-                borderBottom: '12px solid #000',
-                marginLeft: '3px',
-                marginRight: '3px'
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderBottom: `14px solid ${rtmChannelFilters['KA'] ? '#805ad5' : '#a0aec0'}`,
+                transition: 'all 0.2s ease'
               } 
             }),
-            React.createElement('span', { style: { fontSize: '14px' } }, 'KA')
+            React.createElement('span', { 
+              style: { 
+                fontSize: '14px', 
+                fontWeight: '500',
+                color: rtmChannelFilters['KA'] ? '#2d3748' : '#718096'
+              } 
+            }, 'KA'),
+            React.createElement('span', { 
+              style: { 
+                fontSize: '12px', 
+                color: '#a0aec0',
+                marginLeft: 'auto',
+                fontWeight: '500'
+              } 
+            }, partners.filter(p => (p.rtmChannel || mapChannelToRTM(p.channel)) === 'KA').length)
           )
         )
       ),
 
-      // 영역 표시 토글
+      // 지도 설정 - 시각적 개선
       React.createElement('div',
-        { style: { backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px' } },
-        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px' } }, '🗺️ 지도 설정'),
-        React.createElement('label',
-          { 
+        { 
+          style: { 
+            backgroundColor: 'white', 
+            padding: '20px', 
+            borderRadius: '12px', 
+            marginBottom: '20px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            border: '1px solid rgba(102, 126, 234, 0.1)'
+          } 
+        },
+        React.createElement('div',
+          { style: { display: 'flex', alignItems: 'center', marginBottom: '18px' } },
+          React.createElement('div',
+            { 
+              style: { 
+                width: '8px', 
+                height: '8px', 
+                borderRadius: '50%', 
+                backgroundColor: '#4ECDC4',
+                marginRight: '10px'
+              } 
+            }
+          ),
+          React.createElement('h3', { 
             style: { 
-              display: 'flex', 
-              alignItems: 'center', 
-              cursor: 'pointer',
-              fontSize: '14px',
-              gap: '10px',
-              marginBottom: '10px'
+              margin: '0', 
+              fontSize: '16px', 
+              fontWeight: '600',
+              color: '#2d3748',
+              letterSpacing: '-0.02em'
             } 
-          },
-          React.createElement('input', {
-            type: 'checkbox',
-            checked: showAreas,
-            onChange: (e) => setShowAreas(e.target.checked),
-            style: { transform: 'scale(1.1)' }
-          }),
-          '영업 상권 표시'
+          }, '지도 설정')
         ),
-        React.createElement('div', 
-          { style: { fontSize: '12px', color: '#666', marginLeft: '30px' } },
-          `현재 ${showAreas ? areas.length : 0}개 상권이 표시 중입니다.`
+        React.createElement('div',
+          {
+            onClick: () => setShowAreas(!showAreas),
+            style: {
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              padding: '16px 20px',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              backgroundColor: showAreas ? '#f0fff4' : '#fafafa',
+              border: `2px solid ${showAreas ? '#48bb78' : '#e2e8f0'}`,
+              transition: 'all 0.3s ease',
+              userSelect: 'none'
+            },
+            onMouseEnter: (e: any) => {
+              if (!showAreas) {
+                e.target.style.backgroundColor = '#f8f9fa'
+                e.target.style.borderColor = '#cbd5e0'
+              }
+            },
+            onMouseLeave: (e: any) => {
+              if (!showAreas) {
+                e.target.style.backgroundColor = '#fafafa'
+                e.target.style.borderColor = '#e2e8f0'
+              }
+            }
+          },
+          // 커스텀 토글 스위치
+          React.createElement('div',
+            {
+              style: {
+                width: '54px',
+                height: '28px',
+                backgroundColor: showAreas ? '#48bb78' : '#cbd5e0',
+                borderRadius: '14px',
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                flexShrink: 0
+              }
+            },
+            React.createElement('div',
+              {
+                style: {
+                  width: '22px',
+                  height: '22px',
+                  backgroundColor: 'white',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  top: '3px',
+                  left: showAreas ? '29px' : '3px',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }
+              }
+            )
+          ),
+          React.createElement('div', 
+            { style: { flex: 1 } },
+            React.createElement('div', { 
+              style: { 
+                fontSize: '15px', 
+                fontWeight: '600',
+                color: showAreas ? '#2d3748' : '#718096',
+                marginBottom: '4px'
+              } 
+            }, '영업 상권 표시'),
+            React.createElement('div', { 
+              style: { 
+                fontSize: '13px', 
+                color: showAreas ? '#68d391' : '#a0aec0',
+                fontWeight: '500'
+              } 
+            }, showAreas ? `${areas.length}개 상권 표시됨` : '상권 숨김')
+          ),
+          React.createElement('div',
+            {
+              style: {
+                fontSize: '24px',
+                color: showAreas ? '#48bb78' : '#cbd5e0',
+                transition: 'all 0.3s ease'
+              }
+            },
+            showAreas ? '●' : '○'
+          )
         )
       ),
 
@@ -577,7 +906,7 @@ const HomePage = () => {
         { style: { backgroundColor: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px' } },
         React.createElement('div', 
           { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' } },
-          React.createElement('h3', { style: { margin: '0', fontSize: '16px' } }, '👥 담당별 마커 색상'),
+          React.createElement('h3', { style: { margin: '0', fontSize: '16px' } }, '담당별 마커 색상'),
           !loading && partners.length > 0 && (() => {
             const totalManagers = partners.map(p => p.currentManagerEmployeeId).filter((v, i, arr) => v && arr.indexOf(v) === i).length
             return totalManagers > 8 ? React.createElement('button',
@@ -713,7 +1042,7 @@ const HomePage = () => {
           ),
         React.createElement('div', 
           { style: { fontSize: '10px', color: '#888', marginTop: '8px', borderTop: '1px solid #f0f0f0', paddingTop: '8px' } },
-          '💡 색상을 클릭하면 수동으로 변경할 수 있습니다. ↺ 버튼으로 기본 색상 복원 가능'
+          '색상을 클릭하면 수동으로 변경할 수 있습니다. ↺ 버튼으로 기본 색상 복원 가능'
         )
       )
     ),

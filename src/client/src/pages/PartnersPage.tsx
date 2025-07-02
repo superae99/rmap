@@ -135,9 +135,9 @@ const PartnersPage = () => {
     )
 
     if (result.success) {
-      alert(`✅ 엑셀 파일이 다운로드되었습니다.\n파일명: ${result.filename}\n거래처 수: ${result.count}개`)
+      alert(`엑셀 파일이 다운로드되었습니다.\n파일명: ${result.filename}\n거래처 수: ${result.count}개`)
     } else {
-      alert(`❌ ${result.error}`)
+      alert(`${result.error}`)
     }
   }
 
@@ -145,9 +145,9 @@ const PartnersPage = () => {
   const handleTemplateDownload = () => {
     const result = downloadPartnerTemplate()
     if (result.success) {
-      alert(`✅ 템플릿 파일이 다운로드되었습니다.\n파일명: ${result.filename}`)
+      alert(`템플릿 파일이 다운로드되었습니다.\n파일명: ${result.filename}`)
     } else {
-      alert(`❌ ${result.error}`)
+      alert(`${result.error}`)
     }
   }
 
@@ -162,7 +162,7 @@ const PartnersPage = () => {
         { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' } },
         React.createElement('h1', 
           { style: { margin: 0, fontSize: '28px', color: '#333' } }, 
-          '🏢 거래처 관리'
+          '거래처 관리'
         ),
         React.createElement('div',
           { style: { display: 'flex', gap: '10px' } },
@@ -180,7 +180,7 @@ const PartnersPage = () => {
                 fontWeight: 'bold'
               }
             },
-            '📄 템플릿 다운로드'
+            '템플릿 다운로드'
           ),
           React.createElement('button',
             {
@@ -196,7 +196,7 @@ const PartnersPage = () => {
                 fontWeight: 'bold'
               }
             },
-            '📊 엑셀 다운로드'
+            '엑셀 다운로드'
           )
         )
       ),
@@ -318,8 +318,8 @@ const PartnersPage = () => {
             })
           ),
 
-          // 지사 필터
-          React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
+          // 지사 필터 - 지점장에게는 숨김
+          !(user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')) && React.createElement('div', { style: { flex: '0 0 100px', minWidth: '100px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '지사'
@@ -344,8 +344,8 @@ const PartnersPage = () => {
             )
           ),
 
-          // 지점 필터
-          React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
+          // 지점 필터 - 지점장에게는 숨김
+          !(user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')) && React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
             React.createElement('label', 
               { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
               '지점'
@@ -424,7 +424,7 @@ const PartnersPage = () => {
                 boxSizing: 'border-box'
               }
             },
-            '🔍 검색'
+            '검색'
           ),
 
           // 초기화 버튼
@@ -455,7 +455,7 @@ const PartnersPage = () => {
                 boxSizing: 'border-box'
               }
             },
-            '🔄 초기화'
+            '초기화'
           )
         )
       )
@@ -509,7 +509,7 @@ const PartnersPage = () => {
                 fontWeight: 'bold'
               }
             },
-            '📊 현재 목록 다운로드'
+            '현재 목록 다운로드'
           )
         )
       ),
@@ -523,7 +523,7 @@ const PartnersPage = () => {
         !hasSearched ?
           React.createElement('div',
             { style: { padding: '40px', textAlign: 'center', color: '#666' } },
-            '🔍 조회 버튼을 눌러 거래처 목록을 조회하세요.'
+            '조회 버튼을 눌러 거래처 목록을 조회하세요.'
           ) :
         partners.length === 0 ?
           React.createElement('div',
