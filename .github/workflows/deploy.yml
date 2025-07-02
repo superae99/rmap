@@ -1,0 +1,118 @@
+name: Deploy to Environment
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # Development deployment (feature branches)
+  deploy-dev:
+    if: startsWith(github.ref, 'refs/heads/feature/')
+    runs-on: ubuntu-latest
+    environment: development
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Run tests
+      run: |
+        cd server && npm ci && npm test
+        cd ../client && npm ci && npm test
+    
+    - name: Deploy to Development
+      run: |
+        echo "Deploying to development environment..."
+        # Add your deployment script here
+        # Example: ssh deploy@dev-server 'cd /app && ./deploy.sh dev deploy'
+
+  # Testing deployment (develop branch)
+  deploy-test:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: testing
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Build application
+      run: |
+        cd server && npm ci && npm run build
+        cd ../client && npm ci && npm run build
+    
+    - name: Run integration tests
+      run: |
+        cd server && npm run test:integration
+    
+    - name: Deploy to Testing
+      run: |
+        echo "Deploying to testing environment..."
+        # Add your deployment script here
+
+  # Production deployment (main branch)
+  deploy-prod:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Build application
+      run: |
+        cd server && npm ci && npm run build
+        cd ../client && npm ci && npm run build
+    
+    - name: Run all tests
+      run: |
+        cd server && npm run test:all
+        cd ../client && npm run test:all
+    
+    - name: Create deployment package
+      run: |
+        tar -czf deployment.tar.gz \
+          --exclude='node_modules' \
+          --exclude='.git' \
+          --exclude='*.log' \
+          .
+    
+    - name: Deploy to Production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your deployment script here
+        # This should require manual approval in GitHub
+
+  # Rollback job (manual trigger)
+  rollback:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Rollback deployment
+      run: |
+        echo "Rolling back deployment..."
+        # Add rollback script here

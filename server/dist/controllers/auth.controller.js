@@ -1,0 +1,82 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.logout = exports.getProfile = exports.login = void 0;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const database_1 = require("../config/database");
+const User_1 = require("../models/User");
+const userRepository = database_1.AppDataSource.getRepository(User_1.User);
+const login = async (req, res) => {
+    try {
+        const { account, password } = req.body;
+        // 필수 필드 검증
+        if (!account || !password) {
+            return res.status(400).json({ message: '계정과 비밀번호를 입력해주세요.' });
+        }
+        // 사용자 찾기
+        const user = await userRepository.findOne({
+            where: { account, isActive: true }
+        });
+        if (!user) {
+            return res.status(401).json({ message: '계정 또는 비밀번호가 올바르지 않습니다.' });
+        }
+        // 비밀번호 확인
+        const isPasswordValid = await bcryptjs_1.default.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: '계정 또는 비밀번호가 올바르지 않습니다.' });
+        }
+        // JWT 토큰 생성
+        if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET is not defined');
+        }
+        const token = jsonwebtoken_1.default.sign({
+            employeeId: user.employeeId,
+            account: user.account,
+            employeeName: user.employeeName,
+            position: user.position,
+            jobTitle: user.jobTitle
+        }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+        // 마지막 로그인 시간 업데이트
+        user.lastLogin = new Date();
+        await userRepository.save(user);
+        // 비밀번호 제외하고 응답
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({
+            message: '로그인에 성공했습니다.',
+            token,
+            user: userWithoutPassword
+        });
+    }
+    catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    }
+};
+exports.login = login;
+const getProfile = async (req, res) => {
+    try {
+        const employeeId = req.user?.employeeId;
+        const user = await userRepository.findOne({
+            where: { employeeId, isActive: true }
+        });
+        if (!user) {
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+    }
+    catch (error) {
+        console.error('Get profile error:', error);
+        res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    }
+};
+exports.getProfile = getProfile;
+// 로그아웃은 클라이언트에서 토큰을 삭제하면 되므로 별도 구현 불필요
+const logout = async (req, res) => {
+    res.json({ message: '로그아웃되었습니다.' });
+};
+exports.logout = logout;
+//# sourceMappingURL=auth.controller.js.map

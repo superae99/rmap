@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # MySQL Database for Development
+  mysql:
+    image: mysql:8.0
+    container_name: kakao_map_mysql_dev
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_password
+      MYSQL_DATABASE: kakao_map_dev
+      MYSQL_USER: dev_user
+      MYSQL_PASSWORD: dev_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - kakao_dev_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Node.js Backend
+  server:
+    build:
+      context: ./server
+      dockerfile: ${ENV_DIR}/Dockerfile.server
+    container_name: kakao_map_server_dev
+    env_file:
+      - .env.server
+    ports:
+      - "5001:5001"
+    volumes:
+      - ../../server:/app
+      - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - kakao_dev_network
+    command: npm run dev
+
+  # React Frontend
+  client:
+    build:
+      context: ./client
+      dockerfile: ${ENV_DIR}/Dockerfile.client
+    container_name: kakao_map_client_dev
+    env_file:
+      - .env.client
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../client:/app
+      - /app/node_modules
+    networks:
+      - kakao_dev_network
+    command: npm run dev -- --host 0.0.0.0
+
+  # Adminer for Database Management
+  adminer:
+    image: adminer
+    container_name: kakao_map_adminer_dev
+    ports:
+      - "8080:8080"
+    networks:
+      - kakao_dev_network
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_dev_data:
+
+networks:
+  kakao_dev_network:
+    driver: bridge
