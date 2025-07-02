@@ -1,0 +1,53 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.authorize = exports.authenticate = void 0;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const error_middleware_1 = require("./error.middleware");
+const authenticate = async (req, res, next) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            throw new error_middleware_1.AppError('No token provided', 401);
+        }
+        if (!process.env.JWT_SECRET) {
+            throw new error_middleware_1.AppError('JWT_SECRET is not configured', 500);
+        }
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
+    }
+    catch (error) {
+        next(new error_middleware_1.AppError('Invalid token', 401));
+    }
+};
+exports.authenticate = authenticate;
+const authorize = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return next(new error_middleware_1.AppError('Unauthorized', 401));
+        }
+        // 권한 체크 로직
+        const userPosition = req.user.position || '';
+        const userJobTitle = req.user.jobTitle || '';
+        const userAccount = req.user.account || '';
+        let userRole = 'user'; // 기본 권한
+        // admin 계정은 최고 권한 (hyeongraekim 계정도 admin으로 처리)
+        if (userAccount === 'admin' || userAccount === 'hyeongraekim' || userJobTitle.includes('시스템관리자')) {
+            userRole = 'admin';
+        }
+        // 지점장 권한
+        else if (userPosition.includes('지점장') || userJobTitle.includes('지점장')) {
+            userRole = 'manager';
+        }
+        const hasPermission = allowedRoles.includes(userRole);
+        if (!hasPermission) {
+            return next(new error_middleware_1.AppError('권한이 없습니다.', 403));
+        }
+        next();
+    };
+};
+exports.authorize = authorize;
+//# sourceMappingURL=auth.middleware.js.map
