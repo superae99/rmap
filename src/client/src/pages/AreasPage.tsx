@@ -333,8 +333,13 @@ const AreasPage = () => {
           const lat = Number(partner.latitude)
           const lng = Number(partner.longitude)
           
-          // 좌표 유효성 검증
-          if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+          // 좌표 유효성 검증 (개선된 버전)
+          if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
+            return false
+          }
+          
+          // 0에 가까운 좌표도 유효하지 않음
+          if (lat === 0 && lng === 0) {
             return false
           }
           
@@ -345,6 +350,8 @@ const AreasPage = () => {
           
           return true
         })
+        
+        console.log(`상권 ${area.name}: 전체 거래처 ${partners.length}개 → 유효 거래처 ${validPartners.length}개`)
 
         // Point-in-Polygon 검사
         const partnersInArea = validPartners.filter(partner => {
@@ -359,7 +366,7 @@ const AreasPage = () => {
           }
         })
         
-        console.log(`상권 ${area.name}: 전체 거래처 ${partners.length}개 중 ${partnersInArea.length}개 매칭`)
+        console.log(`상권 ${area.name}: 유효 거래처 ${validPartners.length}개 중 ${partnersInArea.length}개 매칭`)
         return partnersInArea
       }
 
@@ -368,18 +375,28 @@ const AreasPage = () => {
         // 상권 내 거래처들 찾기
         const partnersInArea = partners.length > 0 ? findPartnersInArea(area) : []
         
-        // 디버깅 정보 출력 (첫 5개 상권만)
-        if (areasData.indexOf(area) < 5) {
-          console.log(`🔍 상권 "${area.name}" 분석:`, {
+        // 디버깅 정보 출력 (첫 3개 상권만)
+        if (areasData.indexOf(area) < 3) {
+          console.log(`🔍 상권 "${area.name}" 상세 분석:`, {
             totalPartners: partners.length,
+            validPartners: partners.filter(p => {
+              const lat = Number(p.latitude)
+              const lng = Number(p.longitude)
+              return lat !== 0 || lng !== 0
+            }).length,
             partnersInArea: partnersInArea.length,
             coordinatesCount: area.coordinates?.length || 0,
-            samplePartners: partnersInArea.slice(0, 3).map(p => ({
+            samplePartners: partnersInArea.slice(0, 2).map(p => ({
               code: p.partnerCode,
               name: p.partnerName,
               lat: p.latitude,
               lng: p.longitude
-            }))
+            })),
+            invalidCoords: partners.filter(p => {
+              const lat = Number(p.latitude)
+              const lng = Number(p.longitude)
+              return lat === 0 && lng === 0
+            }).length
           })
         }
         
