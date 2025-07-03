@@ -591,29 +591,32 @@ const AreasPage = () => {
         React.createElement('button',
           {
             type: 'submit',
+            disabled: loading,
             style: {
               flex: '0 0 100px',
               minWidth: '100px',
               padding: '8px 16px',
-              backgroundColor: '#667eea',
+              backgroundColor: loading ? '#ccc' : '#667eea',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: 'bold',
               whiteSpace: 'nowrap',
               height: '38px',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              opacity: loading ? 0.7 : 1
             }
           },
-          '조회'
+          loading ? '로딩중...' : '조회'
         ),
 
         // 초기화 버튼
         React.createElement('button',
           {
             type: 'button',
+            disabled: loading,
             onClick: () => {
               setSearchTerm('')
               resetFilters()
@@ -622,16 +625,17 @@ const AreasPage = () => {
               flex: '0 0 80px',
               minWidth: '80px',
               padding: '8px 16px',
-              backgroundColor: '#6c757d',
+              backgroundColor: loading ? '#aaa' : '#6c757d',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               fontWeight: 'bold',
               whiteSpace: 'nowrap',
               height: '38px',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              opacity: loading ? 0.7 : 1
             }
           },
           '초기화'
