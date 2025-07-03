@@ -227,6 +227,26 @@ function App() {
                 }
               },
               '상권 관리'
+            ),
+            React.createElement('a',
+              {
+                href: '/user_guide.html',
+                target: '_blank',
+                style: {
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }
+              },
+              '사용 가이드'
             )
           )
         ),
