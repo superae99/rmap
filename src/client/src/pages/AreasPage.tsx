@@ -792,6 +792,7 @@ const AreasPage = () => {
         (() => {
           const mapBounds = calculateMapBounds(filteredAreas)
           return React.createElement(KakaoMap, {
+            key: `areas-map-${filteredAreas.length}-${hasSearched}`, // 조회할 때마다 지도 재생성
             width: '100%',
             height: '600px',
             latitude: mapBounds.centerLat,
@@ -799,6 +800,7 @@ const AreasPage = () => {
             level: mapBounds.level,
             areas: filteredAreas,
             showAreaBounds: true,
+            fitBounds: true, // 자동 범위 조정 활성화
             onAreaClick: (area: any) => {
               const selectedArea = filteredAreas.find(a => a.id === area.id)
               if (selectedArea) {
