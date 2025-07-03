@@ -236,7 +236,7 @@ function App() {
           // 사용자 인사말
           user && React.createElement('div',
             { style: { color: 'white', fontSize: '14px' } },
-            `${user.employeeName || user.employeeId} ${user.jobTitle || user.position || '직원'}님, 안녕하세요.`
+            `${user.employeeName} ${user.jobTitle}님 안녕하세요.`
           ),
           // 비밀번호 변경 버튼
           React.createElement('button',
