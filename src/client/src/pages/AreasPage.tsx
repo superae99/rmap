@@ -115,19 +115,18 @@ interface ExtendedProcessedArea extends ProcessedArea {
 
 const AreasPage = () => {
   const [areas, setAreas] = useState<ExtendedProcessedArea[]>([])
+  const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedArea, setSelectedArea] = useState<ExtendedProcessedArea | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState<'detail' | 'edit' | 'create'>('detail')
   const [showMapView, setShowMapView] = useState(false)
-  const [allPartners, setAllPartners] = useState<Partner[]>([])
   const [hasSearched, setHasSearched] = useState(false)
-  const [partnersLoading, setPartnersLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   
   // useFilters 훅 사용 (홈화면과 동일)
-  const { options, filters, updateFilter, resetFilters } = useFilters()
+  const { options, filters, updateFilter, resetFilters, loadFilterOptions } = useFilters()
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -141,6 +140,9 @@ const AreasPage = () => {
         const userData = await authAPI.getProfile()
         setUser(userData)
         
+        // 사용자 정보 로드 후 필터 옵션 다시 로드
+        await loadFilterOptions()
+        
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error)
       }
@@ -153,71 +155,34 @@ const AreasPage = () => {
   const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
 
 
-  // 필터가 적용될 때 거래처 데이터 로드
-  useEffect(() => {
-    const loadFilteredPartners = async () => {
-      try {
-        setPartnersLoading(true)
-        
-        // 필터가 있을 때만 거래처 데이터 로드
-        if (filters.branchFilter || filters.officeFilter || filters.managerFilter) {
-          const partnersResponse = await partnerAPI.getPartners({ 
-            limit: 100000,
-            branchFilter: filters.branchFilter,
-            officeFilter: filters.officeFilter,
-            managerFilter: filters.managerFilter
-          })
-          
-          const partnersData = partnersResponse.partners || partnersResponse
-          const validPartners = Array.isArray(partnersData) ? partnersData.filter(partner => {
-            const lat = Number(partner.latitude)
-            const lng = Number(partner.longitude)
-            // 유효한 좌표가 있는 거래처만 필터링
-            return lat && lng && 
-                   lat >= 33 && lat <= 43 &&  // 한국 위도 범위
-                   lng >= 124 && lng <= 132   // 한국 경도 범위
-          }) : []
-          
-          setAllPartners(validPartners)
-        } else {
-          // 필터가 없으면 빈 배열
-          setAllPartners([])
-        }
-      } catch (error) {
-        console.error('거래처 데이터 로드 실패:', error)
-        setAllPartners([])
-      } finally {
-        setPartnersLoading(false)
-      }
-    }
 
-    loadFilteredPartners()
-  }, [filters.branchFilter, filters.officeFilter, filters.managerFilter])
-
-  // 로딩 상태 메시지 컴포넌트
-  const [loadingMessage, setLoadingMessage] = useState('')
-
-  // 상권 데이터 가져오기 (조회 버튼용)
-  const fetchAreas = async () => {
-    if (partnersLoading) {
-      setLoadingMessage('거래처 데이터를 로딩 중입니다. 잠시만 기다려주세요...')
-      setTimeout(() => setLoadingMessage(''), 3000)
-      return
-    }
-    
-    
-    if (allPartners.length === 0) {
-      setLoadingMessage('거래처 데이터를 불러올 수 없습니다. 페이지를 새로고침해주세요.')
-      setTimeout(() => setLoadingMessage(''), 5000)
-      return
-    }
-
+  // 검색 핸들러 (홈화면과 동일한 패턴)
+  const handleSearch = async () => {
     try {
       setLoading(true)
-      // areas-service를 사용하여 salesTerritory 정보 포함된 데이터 로드
-      const token = localStorage.getItem('token')
       
-      const areasData = await loadAreasData(filters, token || undefined)
+      // 거래처와 상권 데이터를 병렬로 로드
+      const [partnersResponse, areasData] = await Promise.all([
+        partnerAPI.getPartners({
+          limit: 100000,
+          branchFilter: filters.branchFilter,
+          officeFilter: filters.officeFilter,
+          managerFilter: filters.managerFilter
+        }),
+        loadAreasData(filters, localStorage.getItem('token') || undefined)
+      ])
+      
+      // 거래처 데이터 처리
+      const partnersData = partnersResponse.partners || partnersResponse
+      const validPartners = Array.isArray(partnersData) ? partnersData.filter(partner => {
+        const lat = Number(partner.latitude)
+        const lng = Number(partner.longitude)
+        return lat && lng && 
+               lat >= 33 && lat <= 43 &&  // 한국 위도 범위
+               lng >= 124 && lng <= 132   // 한국 경도 범위
+      }) : []
+      
+      setPartners(validPartners)
       
       // 필터된 상권들의 sido, sgg 수집
       const filteredRegions = new Set()
@@ -263,10 +228,10 @@ const AreasPage = () => {
         }
 
         // 성능 최적화: 거래처 수가 많을 경우 샘플링으로 속도 향상
-        const shouldSample = allPartners.length > 5000
+        const shouldSample = partners.length > 5000
         const partnersToCheck = shouldSample ? 
-          allPartners.filter((_, index) => index % 5 === 0) : // 5개 중 1개만 샘플링
-          allPartners
+          partners.filter((_, index) => index % 5 === 0) : // 5개 중 1개만 샘플링
+          partners
 
         const partnersInArea = partnersToCheck.filter(partner => {
           const lat = Number(partner.latitude)
@@ -284,7 +249,7 @@ const AreasPage = () => {
         // 샘플링한 경우 추정치 계산
         const estimatedCount = shouldSample ? partnersInArea.length * 5 : partnersInArea.length
         return shouldSample ? 
-          allPartners.filter(partner => {
+          partners.filter(partner => {
             const lat = Number(partner.latitude)
             const lng = Number(partner.longitude)
             return lat && lng && isPointInPolygon([lng, lat], polygon)
@@ -295,7 +260,7 @@ const AreasPage = () => {
       // 지도용 데이터 변환
       const mapAreasData = areasData.map(area => {
         // 상권 내 거래처들 찾기
-        const partnersInArea = allPartners.length > 0 ? findPartnersInArea(area) : []
+        const partnersInArea = partners.length > 0 ? findPartnersInArea(area) : []
         
         // 상권 내 거래처들의 담당자 정보 수집
         const managersInArea = new Set<string>()
@@ -406,14 +371,15 @@ const AreasPage = () => {
       const updatedAreasData = mapAreasData.map(mapArea => mapArea.data)
       
       setAreas(updatedAreasData as ExtendedProcessedArea[])
+      setHasSearched(true)
       
     } catch (error) {
-      console.error('상권 데이터 로드 실패:', error)
+      console.error('데이터 로드 실패:', error)
+      setPartners([])
       setAreas([])
     } finally {
       setLoading(false)
     }
-    setHasSearched(true)
   }
 
   // 검색 필터링
@@ -537,213 +503,240 @@ const AreasPage = () => {
       )
     ),
 
-    // 검색 및 필터 영역
+    // 검색 및 필터 영역 (FilterPanel 사용)
     React.createElement('div',
       { 
         style: { 
-          backgroundColor: 'white', 
-          padding: '20px', 
-          borderRadius: '8px',
-          marginBottom: '20px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          marginBottom: '20px'
         } 
       },
-      React.createElement('form', 
-        { 
-          onSubmit: (e: React.FormEvent) => {
-            e.preventDefault()
-            fetchAreas()
-          },
-          style: { 
+      React.createElement('div',
+        {
+          style: {
             display: 'flex',
-            alignItems: 'end',
-            gap: '12px',
-            flexWrap: 'wrap',
+            gap: '20px',
             marginBottom: '15px'
           }
         },
         
-        // 검색어 입력
-        React.createElement('div', { style: { flex: '1', minWidth: '200px' } },
-          React.createElement('label', 
-            { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-            '검색어'
-          ),
-          React.createElement('input', {
-            type: 'text',
-            value: searchTerm,
-            onChange: (e) => setSearchTerm(e.target.value),
-            placeholder: '상권명, 설명 검색',
-            style: {
-              width: '100%',
-              padding: '8px 10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-              height: '38px',
-              boxSizing: 'border-box'
-            }
-          })
-        ),
+        // FilterPanel 컴포넌트
+        React.createElement('div', { style: { flex: 1 } },
+          React.createElement('div', 
+            {
+              style: {
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }
+            },
+            React.createElement('div',
+              {
+                style: {
+                  padding: '20px',
+                  borderBottom: '1px solid #eee'
+                }
+              },
+              React.createElement('h3', 
+                { style: { margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' } }, 
+                '필터'
+              ),
+              React.createElement('div',
+                {
+                  style: {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '12px'
+                  }
+                },
+                
+                // 지사 필터 - 지점장에게는 숨김
+                !isBranchManager && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
+                  React.createElement('label', 
+                    { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+                    '지사'
+                  ),
+                  React.createElement('select', {
+                    value: filters.branchFilter || '',
+                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('branchFilter', e.target.value || null),
+                    style: {
+                      padding: '6px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '13px'
+                    }
+                  },
+                    React.createElement('option', { value: '' }, '전체'),
+                    ...(options?.branches || []).map(branch =>
+                      React.createElement('option', { key: branch, value: branch }, branch)
+                    )
+                  )
+                ),
 
-        // 지사 필터 - 지점장에게는 숨김
-        !isBranchManager && React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
-          React.createElement('label', 
-            { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-            '지사'
-          ),
-          React.createElement('select', {
-            value: filters.branchFilter || '',
-            onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('branchFilter', e.target.value || null),
-            style: {
-              width: '100%',
-              padding: '8px 10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-              height: '38px',
-              boxSizing: 'border-box'
-            }
-          },
-            React.createElement('option', { value: '' }, '전체'),
-            ...(options?.branches || []).map(branch =>
-              React.createElement('option', { key: branch, value: branch }, branch)
+                // 지점 필터 - 지점장에게는 숨김
+                !isBranchManager && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
+                  React.createElement('label', 
+                    { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+                    '지점'
+                  ),
+                  React.createElement('select', {
+                    value: filters.officeFilter || '',
+                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('officeFilter', e.target.value || null),
+                    style: {
+                      padding: '6px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '13px'
+                    }
+                  },
+                    React.createElement('option', { value: '' }, '전체'),
+                    ...(options?.offices || [])
+                      .filter(office => !filters.branchFilter || office.branchName === filters.branchFilter)
+                      .map(office =>
+                        React.createElement('option', { key: office.officeName, value: office.officeName }, office.officeName)
+                      )
+                  )
+                ),
+
+                // 담당자 필터
+                React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
+                  React.createElement('label', 
+                    { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+                    '담당자'
+                  ),
+                  React.createElement('select', {
+                    value: filters.managerFilter || '',
+                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('managerFilter', e.target.value || null),
+                    style: {
+                      padding: '6px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '13px'
+                    }
+                  },
+                    React.createElement('option', { value: '' }, '전체'),
+                    ...(options?.managers || [])
+                      .filter(manager => {
+                        if (filters.branchFilter && manager.branchName !== filters.branchFilter) return false
+                        if (filters.officeFilter && manager.officeName !== filters.officeFilter) return false
+                        return true
+                      })
+                      .map(manager =>
+                        React.createElement('option', { key: manager.employeeId, value: manager.employeeId }, `${manager.employeeName} (${manager.officeName})`)
+                      )
+                  )
+                )
+              ),
+              
+              // 조회 버튼
+              React.createElement('div',
+                {
+                  style: {
+                    paddingTop: '15px',
+                    borderTop: '1px solid #eee',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }
+                },
+                React.createElement('button',
+                  {
+                    onClick: handleSearch,
+                    disabled: loading,
+                    style: {
+                      backgroundColor: loading ? '#ccc' : '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      padding: '8px 16px',
+                      minWidth: '100px',
+                      height: '32px'
+                    }
+                  },
+                  loading ? '조회중...' : '조회'
+                ),
+                React.createElement('button',
+                  {
+                    type: 'button',
+                    onClick: resetFilters,
+                    disabled: loading,
+                    style: {
+                      backgroundColor: loading ? '#aaa' : '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      padding: '8px 16px',
+                      marginLeft: '8px'
+                    }
+                  },
+                  '초기화'
+                )
+              )
             )
           )
         ),
-
-        // 지점 필터 - 지점장에게는 숨김
-        !isBranchManager && React.createElement('div', { style: { flex: '0 0 120px', minWidth: '120px' } },
-          React.createElement('label', 
-            { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-            '지점'
-          ),
-          React.createElement('select', {
-            value: filters.officeFilter || '',
-            onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('officeFilter', e.target.value || null),
-            style: {
-              width: '100%',
-              padding: '8px 10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-              height: '38px',
-              boxSizing: 'border-box'
-            }
+        
+        // 검색어 입력
+        React.createElement('div', 
+          { 
+            style: { 
+              flex: '0 0 300px',
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            } 
           },
-            React.createElement('option', { value: '' }, '전체'),
-            ...(options?.offices || [])
-              .filter(office => !filters.branchFilter || office.branchName === filters.branchFilter)
-              .map(office =>
-                React.createElement('option', { key: office.officeName, value: office.officeName }, office.officeName)
-              )
-          )
-        ),
-
-        // 담당자 필터
-        React.createElement('div', { style: { flex: '0 0 150px', minWidth: '150px' } },
-          React.createElement('label', 
-            { style: { display: 'block', marginBottom: '5px', fontWeight: 'bold' } }, 
-            '담당자'
-          ),
-          React.createElement('select', {
-            value: filters.managerFilter || '',
-            onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('managerFilter', e.target.value || null),
-            style: {
-              width: '100%',
-              padding: '8px 10px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-              height: '38px',
-              boxSizing: 'border-box'
-            }
-          },
-            React.createElement('option', { value: '' }, '전체'),
-            ...(options?.managers || [])
-              .filter(manager => {
-                if (filters.branchFilter && manager.branchName !== filters.branchFilter) return false
-                if (filters.officeFilter && manager.officeName !== filters.officeFilter) return false
-                return true
-              })
-              .map(manager =>
-                React.createElement('option', { key: manager.employeeId, value: manager.employeeId }, `${manager.employeeName} (${manager.officeName})`)
-              )
-          )
-        ),
-
-        // 검색 버튼
-        React.createElement('button',
-          {
-            type: 'submit',
-            disabled: loading,
-            style: {
-              flex: '0 0 100px',
-              minWidth: '100px',
-              padding: '8px 16px',
-              backgroundColor: loading ? '#ccc' : '#667eea',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              height: '38px',
-              boxSizing: 'border-box',
-              opacity: loading ? 0.7 : 1
-            }
-          },
-          loading ? '로딩중...' : '조회'
-        ),
-
-        // 초기화 버튼
-        React.createElement('button',
-          {
-            type: 'button',
-            disabled: loading,
-            onClick: () => {
-              setSearchTerm('')
-              resetFilters()
+          React.createElement('form', 
+            {
+              onSubmit: (e: React.FormEvent) => {
+                e.preventDefault()
+              },
+              style: {
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }
             },
-            style: {
-              flex: '0 0 80px',
-              minWidth: '80px',
-              padding: '8px 16px',
-              backgroundColor: loading ? '#aaa' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              height: '38px',
-              boxSizing: 'border-box',
-              opacity: loading ? 0.7 : 1
-            }
-          },
-          '초기화'
+            React.createElement('label', 
+              { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+              '검색어'
+            ),
+            React.createElement('input', {
+              type: 'text',
+              value: searchTerm,
+              onChange: (e) => setSearchTerm(e.target.value),
+              placeholder: '상권명, 설명 검색',
+              style: {
+                padding: '6px 8px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '13px'
+              }
+            })
+          )
         )
       ),
 
-      // 로딩 메시지 표시
-      loadingMessage && React.createElement('div',
-        { style: { 
-          backgroundColor: '#fff3cd', 
-          color: '#856404', 
-          padding: '10px 15px', 
-          borderRadius: '4px',
-          border: '1px solid #ffeaa7',
-          marginBottom: '15px',
-          fontSize: '14px'
-        } },
-        loadingMessage
-      ),
 
       // 통계 정보
       React.createElement('div',
-        { style: { display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'center', paddingTop: '15px', borderTop: '1px solid #eee' } },
+        {
+          style: {
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }
+        },
+        React.createElement('h3', { style: { margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600', textAlign: 'center' } }, '통계 정보'),
+        React.createElement('div',
+          { style: { display: 'flex', gap: '20px', alignItems: 'center', justifyContent: 'center' } },
         React.createElement('div', { style: { textAlign: 'center' } },
           React.createElement('div', { style: { fontSize: '18px', fontWeight: 'bold', color: '#667eea' } },
             filteredAreas.filter(a => a.salesTerritory?.managerName && !a.salesTerritory.managerName.includes('관리 구역 담당 없음')).length
@@ -774,8 +767,7 @@ const AreasPage = () => {
           ),
           React.createElement('div', { style: { fontSize: '12px', color: '#666' } }, '총 거래처')
         )
-      )
-    ),
+      ),
 
     // 지도 보기 또는 목록 보기
     showMapView ? 
@@ -998,7 +990,6 @@ const AreasPage = () => {
                     }
                   },
                   '설정'
-                )
                 )
               )
             )
@@ -1276,6 +1267,9 @@ const AreasPage = () => {
           )
       )
     )
+  )
+  )
+  )
   )
 }
 
