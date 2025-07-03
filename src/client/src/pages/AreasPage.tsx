@@ -5,34 +5,115 @@ import { loadAreasData, ProcessedArea } from '../utils/areaLoader'
 import { useFilters } from '../hooks/useFilters'
 import type { Partner } from '../types/partner.types'
 
-// 점이 폴리곤 내부에 있는지 확인하는 함수 (Ray Casting Algorithm)
+// 점이 폴리곤 내부에 있는지 확인하는 함수 (개선된 Ray Casting Algorithm)
 const isPointInPolygon = (point: [number, number], polygon: number[][]): boolean => {
-  const [x, y] = point
-  let inside = false
-  
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const [xi, yi] = polygon[i]
-    const [xj, yj] = polygon[j]
+  try {
+    const [x, y] = point
     
-    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
-      inside = !inside
+    // 입력 유효성 검증
+    if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+      return false
     }
+    
+    if (!Array.isArray(polygon) || polygon.length < 3) {
+      return false
+    }
+    
+    let inside = false
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const [xi, yi] = polygon[i]
+      const [xj, yj] = polygon[j]
+      
+      // 좌표 유효성 검증
+      if (typeof xi !== 'number' || typeof yi !== 'number' || 
+          typeof xj !== 'number' || typeof yj !== 'number' ||
+          isNaN(xi) || isNaN(yi) || isNaN(xj) || isNaN(yj)) {
+        continue
+      }
+      
+      // Ray casting 알고리즘
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside
+      }
+    }
+    
+    return inside
+  } catch (error) {
+    console.warn('Point-in-Polygon 계산 오류:', error)
+    return false
   }
-  
-  return inside
 }
 
 
-// 좌표 변환 함수 (ProcessedArea는 이미 number[][] 형식)
-const normalizeCoordinates = (coordinates: number[][] | any): number[][] => {
+// 좌표 변환 함수 (다양한 형식의 좌표 데이터 처리)
+const normalizeCoordinates = (coordinates: any): number[][] => {
+  if (!coordinates) {
+    console.log('🗺️ 좌표 데이터가 없음')
+    return []
+  }
+  
   if (!Array.isArray(coordinates) || coordinates.length === 0) {
     console.log('🗺️ 좌표 배열이 비어있거나 유효하지 않음:', coordinates)
     return []
   }
   
-  // ProcessedArea는 이미 [lng, lat] 형식인 number[][] 타입
-  console.log('🗺️ ProcessedArea 좌표 데이터:', coordinates.length, '개 좌표')
-  return coordinates as number[][]
+  try {
+    // 첫 번째 요소를 보고 데이터 형식 판단
+    const firstItem = coordinates[0]
+    
+    if (!firstItem) {
+      console.log('🗺️ 첫 번째 좌표 요소가 비어있음')
+      return []
+    }
+    
+    // 형식 1: [{lat: number, lng: number}, ...]
+    if (typeof firstItem === 'object' && 'lat' in firstItem && 'lng' in firstItem) {
+      console.log('🗺️ {lat, lng} 형식 좌표 변환 시작')
+      const converted = coordinates.map((coord: any) => {
+        if (coord && typeof coord.lng === 'number' && typeof coord.lat === 'number') {
+          return [coord.lng, coord.lat] as [number, number]
+        }
+        console.warn('유효하지 않은 좌표:', coord)
+        return null
+      }).filter((coord): coord is [number, number] => coord !== null)
+      
+      console.log('🗺️ {lat, lng} 형식 변환 완료:', converted.length, '개 좌표')
+      return converted
+    }
+    
+    // 형식 2: [[lng, lat], ...] or [lng, lat]
+    if (Array.isArray(firstItem)) {
+      console.log('🗺️ [lng, lat] 배열 형식 검증 시작')
+      const validated = coordinates.map((coord: any) => {
+        if (Array.isArray(coord) && coord.length >= 2 && 
+            typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+            !isNaN(coord[0]) && !isNaN(coord[1])) {
+          return [coord[0], coord[1]] as [number, number]
+        }
+        console.warn('유효하지 않은 좌표 배열:', coord)
+        return null
+      }).filter((coord): coord is [number, number] => coord !== null)
+      
+      console.log('🗺️ [lng, lat] 배열 형식 검증 완료:', validated.length, '개 좌표')
+      return validated
+    }
+    
+    // 형식 3: 단일 좌표 쌍 [lng, lat]
+    if (typeof firstItem === 'number' && coordinates.length >= 2) {
+      console.log('🗺️ 단일 좌표 쌍 [lng, lat] 형식')
+      // 이 경우 전체 배열이 하나의 좌표이므로 처리할 수 없음
+      console.warn('단일 좌표는 폴리곤을 만들 수 없음')
+      return []
+    }
+    
+    console.warn('🗺️ 알 수 없는 좌표 형식:', firstItem)
+    return []
+    
+  } catch (error) {
+    console.error('🗺️ 좌표 변환 오류:', error)
+    return []
+  }
 }
 
 // 영역들의 경계를 계산하여 중앙 좌표와 줌 레벨을 구하는 함수
@@ -208,6 +289,7 @@ const AreasPage = () => {
       // 각 상권에 포함되는 거래처들 찾기
       const findPartnersInArea = (area: any): Partner[] => {
         if (!area.coordinates || !Array.isArray(area.coordinates) || area.coordinates.length < 3) {
+          console.warn(`상권 ${area.name}: 유효하지 않은 좌표 데이터`)
           return []
         }
 
@@ -222,45 +304,84 @@ const AreasPage = () => {
             // 이미 [lng, lat] 형식
             polygon = area.coordinates
           }
+          
+          // 폴리곤 유효성 검증
+          if (polygon.length < 3) {
+            console.warn(`상권 ${area.name}: 폴리곤 점이 3개 미만`)
+            return []
+          }
+          
+          // 좌표값 유효성 검증
+          const validPolygon = polygon.every(coord => 
+            Array.isArray(coord) && coord.length === 2 && 
+            typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+            !isNaN(coord[0]) && !isNaN(coord[1])
+          )
+          
+          if (!validPolygon) {
+            console.warn(`상권 ${area.name}: 유효하지 않은 폴리곤 좌표`)
+            return []
+          }
+          
         } catch (error) {
           console.warn(`좌표 변환 실패 for area ${area.name}:`, error)
           return []
         }
 
-        // 성능 최적화: 거래처 수가 많을 경우 샘플링으로 속도 향상
-        const shouldSample = partners.length > 5000
-        const partnersToCheck = shouldSample ? 
-          partners.filter((_, index) => index % 5 === 0) : // 5개 중 1개만 샘플링
-          partners
-
-        const partnersInArea = partnersToCheck.filter(partner => {
+        // 거래처 필터링 (좌표 유효성 검증 포함)
+        const validPartners = partners.filter(partner => {
           const lat = Number(partner.latitude)
           const lng = Number(partner.longitude)
           
-          if (!lat || !lng) return false
+          // 좌표 유효성 검증
+          if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+            return false
+          }
+          
+          // 한국 영역 내 좌표인지 확인
+          if (lat < 33 || lat > 43 || lng < 124 || lng > 132) {
+            return false
+          }
+          
+          return true
+        })
+
+        // Point-in-Polygon 검사
+        const partnersInArea = validPartners.filter(partner => {
+          const lat = Number(partner.latitude)
+          const lng = Number(partner.longitude)
           
           try {
             return isPointInPolygon([lng, lat], polygon)
           } catch (error) {
+            console.warn(`Point-in-Polygon 검사 실패 - 거래처: ${partner.partnerCode}, 상권: ${area.name}`, error)
             return false
           }
         })
-
-        // 샘플링한 경우 추정치 계산
-        const estimatedCount = shouldSample ? partnersInArea.length * 5 : partnersInArea.length
-        return shouldSample ? 
-          partners.filter(partner => {
-            const lat = Number(partner.latitude)
-            const lng = Number(partner.longitude)
-            return lat && lng && isPointInPolygon([lng, lat], polygon)
-          }).slice(0, Math.min(100, estimatedCount)) : // 최대 100개로 제한
-          partnersInArea
+        
+        console.log(`상권 ${area.name}: 전체 거래처 ${partners.length}개 중 ${partnersInArea.length}개 매칭`)
+        return partnersInArea
       }
 
       // 지도용 데이터 변환
       const mapAreasData = areasData.map(area => {
         // 상권 내 거래처들 찾기
         const partnersInArea = partners.length > 0 ? findPartnersInArea(area) : []
+        
+        // 디버깅 정보 출력 (첫 5개 상권만)
+        if (areasData.indexOf(area) < 5) {
+          console.log(`🔍 상권 "${area.name}" 분석:`, {
+            totalPartners: partners.length,
+            partnersInArea: partnersInArea.length,
+            coordinatesCount: area.coordinates?.length || 0,
+            samplePartners: partnersInArea.slice(0, 3).map(p => ({
+              code: p.partnerCode,
+              name: p.partnerName,
+              lat: p.latitude,
+              lng: p.longitude
+            }))
+          })
+        }
         
         // 상권 내 거래처들의 담당자 정보 수집
         const managersInArea = new Set<string>()
@@ -287,7 +408,13 @@ const AreasPage = () => {
           partnersInArea,
           managersInArea: managerDetails,
           partnerCount: partnersInArea.length,
-          managerCount: managersInArea.size
+          managerCount: managersInArea.size,
+          // 디버깅 정보 추가
+          _debug: {
+            originalCoordinatesCount: area.coordinates?.length || 0,
+            validPartnersChecked: partners.length,
+            finalPartnerCount: partnersInArea.length
+          }
         }
         
         // salesTerritory가 있지만 담당자가 없는 경우만 처리
@@ -1062,7 +1189,14 @@ const AreasPage = () => {
                 disableMarkerCentering: true,
                 areas: (() => {
                   const normalizedCoords = normalizeCoordinates(selectedArea.coordinates)
+                  console.log('🗺️ 선택된 상권 원본 좌표:', selectedArea.coordinates)
                   console.log('🗺️ 정규화된 좌표:', normalizedCoords)
+                  
+                  if (!normalizedCoords || normalizedCoords.length < 3) {
+                    console.error('🗺️ 유효하진 않은 좌표 데이터 - 폴리곤을 그릴 수 없음')
+                    return []
+                  }
+                  
                   const areaData = {
                     id: selectedArea.id,
                     name: selectedArea.name,
