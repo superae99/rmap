@@ -394,6 +394,10 @@ const AreasPage = () => {
 
   // 상권 상세보기 (데이터 전처리 최적화)
   const handleAreaDetail = (area: Area) => {
+    console.log('🔍 Area detail clicked:', area)
+    console.log('🔍 area.partnersInArea:', area.partnersInArea)
+    console.log('🔍 area.coordinates:', area.coordinates)
+    
     setMapLoading(true)
     setSelectedArea(area)
     setModalType('detail')
@@ -442,10 +446,10 @@ const AreasPage = () => {
             id: area.id,
             name: area.name,
             coordinates: normalizedCoordinates,
-            color: area.color || '#667eea',
-            strokeColor: area.strokeColor || '#667eea',
-            strokeWeight: area.strokeWeight || 2,
-            opacity: area.fillOpacity || 0.3
+            color: (area as any).color || '#667eea',
+            strokeColor: (area as any).strokeColor || '#667eea',
+            strokeWeight: (area as any).strokeWeight || 2,
+            opacity: (area as any).fillOpacity || 0.3
           },
           markers,
           managerColorMap,
@@ -454,15 +458,19 @@ const AreasPage = () => {
           showingPartners: limitedPartners.length
         })
       } else {
+        console.log('🔍 No partners in area, creating area-only data')
+        const normalizedCoords = normalizeCoordinates(area.coordinates)
+        console.log('🔍 Normalized coordinates:', normalizedCoords)
+        
         setProcessedModalData({
           area: {
             id: area.id,
             name: area.name,
-            coordinates: normalizeCoordinates(area.coordinates),
-            color: area.color || '#667eea',
-            strokeColor: area.strokeColor || '#667eea',
-            strokeWeight: area.strokeWeight || 2,
-            opacity: area.fillOpacity || 0.3
+            coordinates: normalizedCoords,
+            color: (area as any).color || '#667eea',
+            strokeColor: (area as any).strokeColor || '#667eea',
+            strokeWeight: (area as any).strokeWeight || 2,
+            opacity: (area as any).fillOpacity || 0.3
           },
           markers: [],
           managerColorMap: new Map(),
