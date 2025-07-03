@@ -337,7 +337,12 @@ const AreasPage = () => {
             color: area.color || '#667eea',
             strokeColor: area.strokeColor || '#667eea',
             strokeWeight: area.strokeWeight || 2,
-            fillOpacity: area.fillOpacity || 0.3
+            fillOpacity: area.fillOpacity || 0.3,
+            // 거래처 정보도 data에 포함
+            partnersInArea: partnersInArea,
+            managersInArea: managerDetails,
+            partnerCount: partnersInArea.length,
+            managerCount: managersInArea.size
           }
         }
       })
