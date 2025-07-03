@@ -120,7 +120,6 @@ const AreasPage = () => {
   const [selectedArea, setSelectedArea] = useState<ExtendedProcessedArea | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState<'detail' | 'edit' | 'create'>('detail')
-  const [mapAreas, setMapAreas] = useState<any[]>([])
   const [showMapView, setShowMapView] = useState(false)
   const [allPartners, setAllPartners] = useState<Partner[]>([])
   const [hasSearched, setHasSearched] = useState(false)
@@ -406,13 +405,11 @@ const AreasPage = () => {
       // 수정된 상권 정보로 업데이트
       const updatedAreasData = mapAreasData.map(mapArea => mapArea.data)
       
-      setMapAreas(mapAreasData)
       setAreas(updatedAreasData as ExtendedProcessedArea[])
       
     } catch (error) {
       console.error('상권 데이터 로드 실패:', error)
       setAreas([])
-      setMapAreas([])
     } finally {
       setLoading(false)
     }
