@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { areaAPI, authAPI, partnerAPI } from '../services/api'
 import KakaoMap from '../components/map/KakaoMap'
-import { loadAreasData } from '../services/areas-service'
+import { loadAreasData, ProcessedArea } from '../utils/areaLoader'
 import { useFilters } from '../hooks/useFilters'
 import type { Partner } from '../types/partner.types'
 
@@ -22,50 +22,21 @@ const isPointInPolygon = (point: [number, number], polygon: number[][]): boolean
   return inside
 }
 
-// 색상 생성 함수 (컴포넌트 외부로 이동하여 재계산 방지)
-const generateManagerColor = (index: number): string => {
-  const hues = [0, 240, 120, 60, 300, 180, 30, 270, 150, 330, 90, 210]
-  const hue = hues[index % hues.length]
-  const saturation = 70 + (Math.floor(index / hues.length) * 15) % 30
-  const lightness = 50 + (Math.floor(index / hues.length) * 10) % 20
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
-}
 
-// 좌표 변환 함수 (최적화)
-const normalizeCoordinates = (coordinates: any): number[][] => {
-  if (!Array.isArray(coordinates) || coordinates.length === 0) return []
-  
-  // 이미 [lng, lat] 형식인 경우
-  if (typeof coordinates[0] === 'object' && 'lat' in coordinates[0]) {
-    return coordinates.map((coord: any) => [coord.lng, coord.lat])
+// 좌표 변환 함수 (ProcessedArea는 이미 number[][] 형식)
+const normalizeCoordinates = (coordinates: number[][] | any): number[][] => {
+  if (!Array.isArray(coordinates) || coordinates.length === 0) {
+    console.log('🗺️ 좌표 배열이 비어있거나 유효하지 않음:', coordinates)
+    return []
   }
   
+  // ProcessedArea는 이미 [lng, lat] 형식인 number[][] 타입
+  console.log('🗺️ ProcessedArea 좌표 데이터:', coordinates.length, '개 좌표')
   return coordinates as number[][]
 }
 
-interface Area {
-  id: number
-  name: string
-  coordinates: Array<{ lat: number; lng: number }>
-  color?: string
-  strokeColor?: string
-  strokeWeight?: number
-  fillOpacity?: number
-  description?: string
-  properties?: Record<string, any>
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-  salesTerritory?: {
-    territoryId: number
-    branchName: string
-    officeName: string
-    managerName: string
-    managerEmployeeId: string
-    sido: string
-    gungu: string
-    admNm: string
-  } | null
+// AreasPage에서 사용하는 확장된 ProcessedArea 타입
+interface ExtendedProcessedArea extends ProcessedArea {
   partnersInArea?: Partner[]
   managersInArea?: Array<{
     name: string
@@ -75,14 +46,16 @@ interface Area {
   partnerCount?: number
   managerCount?: number
   isRelatedArea?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 
 const AreasPage = () => {
-  const [areas, setAreas] = useState<Area[]>([])
+  const [areas, setAreas] = useState<ExtendedProcessedArea[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedArea, setSelectedArea] = useState<Area | null>(null)
+  const [selectedArea, setSelectedArea] = useState<ExtendedProcessedArea | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState<'detail' | 'edit' | 'create'>('detail')
   const [mapAreas, setMapAreas] = useState<any[]>([])
@@ -91,7 +64,6 @@ const AreasPage = () => {
   const [hasSearched, setHasSearched] = useState(false)
   const [partnersLoading, setPartnersLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [mapLoading, setMapLoading] = useState(false)
   
   // useFilters 훅 사용 (홈화면과 동일)
   const { options, filters, updateFilter, resetFilters } = useFilters()
@@ -373,7 +345,7 @@ const AreasPage = () => {
       const updatedAreasData = mapAreasData.map(mapArea => mapArea.data)
       
       setMapAreas(mapAreasData)
-      setAreas(updatedAreasData as any)
+      setAreas(updatedAreasData as ExtendedProcessedArea[])
       
     } catch (error) {
       console.error('상권 데이터 로드 실패:', error)
@@ -411,15 +383,17 @@ const AreasPage = () => {
   }
 
   // 상권 상세보기 (홈화면과 동일한 방식)
-  const handleAreaDetail = (area: Area) => {
+  const handleAreaDetail = (area: ExtendedProcessedArea) => {
+    console.log('🗺️ 상권 상세 모달 열기:', area)
+    console.log('🗺️ 영역 좌표:', area.coordinates)
+    console.log('🗺️ 영역 내 거래처:', area.partnersInArea)
     setSelectedArea(area)
     setModalType('detail')
     setShowModal(true)
-    setMapLoading(false)
   }
 
   // 상권 편집
-  const handleAreaEdit = (area: Area) => {
+  const handleAreaEdit = (area: ExtendedProcessedArea) => {
     setSelectedArea(area)
     setModalType('edit')
     setShowModal(true)
@@ -436,13 +410,12 @@ const AreasPage = () => {
   const closeModal = () => {
     setShowModal(false)
     setSelectedArea(null)
-    setMapLoading(false)
   }
 
   // 상권 활성화/비활성화 토글
-  const toggleAreaActive = async (area: Area) => {
+  const toggleAreaActive = async (area: ExtendedProcessedArea) => {
     try {
-      await areaAPI.updateArea(area.id, { isActive: !area.isActive })
+      await areaAPI.updateArea(Number(area.id), { isActive: !area.isActive })
       setAreas(areas.map(a => 
         a.id === area.id ? { ...a, isActive: !a.isActive } : a
       ))
@@ -1031,37 +1004,57 @@ const AreasPage = () => {
                 showAreaBounds: true,
                 fitBounds: true,
                 disableMarkerCentering: true,
-                areas: [{
-                  id: selectedArea.id,
-                  name: selectedArea.name,
-                  coordinates: normalizeCoordinates(selectedArea.coordinates),
-                  color: selectedArea.color || '#667eea',
-                  strokeColor: selectedArea.strokeColor || '#667eea',
-                  strokeWeight: selectedArea.strokeWeight || 2,
-                  opacity: selectedArea.fillOpacity || 0.3,
-                  data: { salesTerritory: selectedArea.salesTerritory, properties: selectedArea.properties }
-                }],
-                markers: selectedArea.partnersInArea ?
-                  selectedArea.partnersInArea
-                    .filter(partner => {
-                      const lat = Number(partner.latitude)
-                      const lng = Number(partner.longitude)
-                      return lat && lng && !isNaN(lat) && !isNaN(lng) &&
-                             lat >= 33 && lat <= 43 && lng >= 124 && lng <= 132
-                    })
-                    .map((partner, index) => {
-                      const managerColor = getManagerColor(partner.currentManagerEmployeeId)
-                      const lat = Number(partner.latitude)
-                      const lng = Number(partner.longitude)
-                      
-                      return {
-                        id: partner.partnerCode,
-                        latitude: lat,
-                        longitude: lng,
-                        title: partner.partnerName,
-                        markerColor: managerColor,
-                        rtmChannel: partner.channel || '업소',
-                        content: `
+                areas: (() => {
+                  const normalizedCoords = normalizeCoordinates(selectedArea.coordinates)
+                  console.log('🗺️ 정규화된 좌표:', normalizedCoords)
+                  const areaData = {
+                    id: selectedArea.id,
+                    name: selectedArea.name,
+                    coordinates: normalizedCoords,
+                    color: selectedArea.color || '#667eea',
+                    strokeColor: selectedArea.strokeColor || '#667eea',
+                    strokeWeight: selectedArea.strokeWeight || 2,
+                    opacity: selectedArea.fillOpacity || 0.3,
+                    data: { salesTerritory: selectedArea.salesTerritory, properties: selectedArea.properties }
+                  }
+                  console.log('🗺️ KakaoMap에 전달할 영역 데이터:', areaData)
+                  return [areaData]
+                })(),
+                markers: (() => {
+                  if (!selectedArea.partnersInArea) {
+                    console.log('🗺️ 영역 내 거래처 데이터 없음')
+                    return []
+                  }
+                  
+                  console.log('🗺️ 전체 거래처 수:', selectedArea.partnersInArea.length)
+                  
+                  const validPartners = (selectedArea.partnersInArea as any[]).filter((partner: any) => {
+                    const lat = Number(partner.latitude)
+                    const lng = Number(partner.longitude)
+                    const isValid = lat && lng && !isNaN(lat) && !isNaN(lng) &&
+                           lat >= 33 && lat <= 43 && lng >= 124 && lng <= 132
+                    
+                    if (!isValid) {
+                      console.log('🗺️ 유효하지 않은 좌표:', partner.partnerCode, lat, lng)
+                    }
+                    return isValid
+                  })
+                  
+                  console.log('🗺️ 유효한 거래처 수:', validPartners.length)
+                  
+                  const markers = validPartners.map((partner: any, index: number) => {
+                    const managerColor = getManagerColor(partner.currentManagerEmployeeId)
+                    const lat = Number(partner.latitude)
+                    const lng = Number(partner.longitude)
+                    
+                    const markerData = {
+                      id: partner.partnerCode,
+                      latitude: lat,
+                      longitude: lng,
+                      title: partner.partnerName,
+                      markerColor: managerColor,
+                      rtmChannel: partner.channel || '업소',
+                      content: `
                           <div style="min-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
                             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; margin: -15px -15px 15px -15px; border-radius: 8px 8px 0 0;">
                               <h3 style="margin: 0; font-size: 18px; font-weight: 600;">${partner.partnerName}</h3>
@@ -1087,15 +1080,25 @@ const AreasPage = () => {
                             </div>
                           </div>
                         `
-                      }
-                    }) : [],
+                    }
+                    
+                    if (index < 3) {
+                      console.log(`🗺️ 마커 ${index + 1}:`, markerData)
+                    }
+                    
+                    return markerData
+                  })
+                  
+                  console.log('🗺️ KakaoMap에 전달할 마커 수:', markers.length)
+                  return markers
+                })(),
                 level: 8
               }) : null
             ),
             
             // 담당자별 색상 범례 (거래처가 있을 때만 표시)
             selectedArea && selectedArea.partnersInArea && selectedArea.partnersInArea.length > 0 && (() => {
-              const uniqueManagers = [...new Set(selectedArea.partnersInArea!.map(p => p.currentManagerEmployeeId))].filter(Boolean)
+              const uniqueManagers = [...new Set((selectedArea.partnersInArea as any[]).map((p: any) => p.currentManagerEmployeeId))].filter(Boolean)
               return React.createElement('div',
                 { style: { padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' } },
                 React.createElement('h4', { style: { margin: '0 0 10px 0', fontSize: '14px', color: '#333' } }, 
@@ -1103,10 +1106,10 @@ const AreasPage = () => {
                 ),
                 React.createElement('div', 
                   { style: { display: 'flex', flexWrap: 'wrap', gap: '10px' } },
-                  uniqueManagers.map(employeeId => {
-                    const manager = selectedArea.partnersInArea!.find(p => p.currentManagerEmployeeId === employeeId)
-                    const partnerCount = selectedArea.partnersInArea!.filter(p => p.currentManagerEmployeeId === employeeId).length
-                    const color = getManagerColor(employeeId)
+                  uniqueManagers.map((employeeId: any) => {
+                    const manager = (selectedArea.partnersInArea as any[]).find((p: any) => p.currentManagerEmployeeId === employeeId)
+                    const partnerCount = (selectedArea.partnersInArea as any[]).filter((p: any) => p.currentManagerEmployeeId === employeeId).length
+                    const color = getManagerColor(employeeId as string)
                     
                     return React.createElement('div', 
                       { 
@@ -1161,8 +1164,8 @@ const AreasPage = () => {
               '투명도': selectedArea.fillOpacity,
               '좌표점 수': selectedArea.coordinates?.length || 0,
               '상태': selectedArea.isActive ? '활성' : '비활성',
-              '생성일': new Date(selectedArea.createdAt).toLocaleDateString(),
-              '수정일': new Date(selectedArea.updatedAt).toLocaleDateString(),
+              '생성일': selectedArea.createdAt ? new Date(selectedArea.createdAt).toLocaleDateString() : '-',
+              '수정일': selectedArea.updatedAt ? new Date(selectedArea.updatedAt).toLocaleDateString() : '-',
               '영역 내 거래처': selectedArea.partnerCount || 0,
               '영역 내 담당자': selectedArea.managerCount || 0
               }).map(([key, value]) =>
