@@ -382,7 +382,7 @@ function App() {
           }),
           
           passwordError && React.createElement('div',
-            { style: { color: '#ff6b6b', fontSize: '14px', marginBottom: '16px', textAlign: 'center' } },
+            { style: { color: '#ff9800', fontSize: '14px', marginBottom: '16px', textAlign: 'center' } },
             passwordError
           ),
           
@@ -535,7 +535,7 @@ function App() {
         
         // 에러 메시지
         passwordError && React.createElement('div',
-          { style: { color: '#ff6b6b', fontSize: '14px', marginBottom: '15px' } },
+          { style: { color: '#ff9800', fontSize: '14px', marginBottom: '15px' } },
           passwordError
         ),
         

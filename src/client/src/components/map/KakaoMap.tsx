@@ -569,13 +569,14 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           tooltipElement.style.cssText = `
             position: fixed;
             padding: 8px 12px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            border-radius: 4px;
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 6px;
             font-size: 12px;
             font-weight: 500;
             white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             pointer-events: none;
             z-index: 999999;
             display: none;

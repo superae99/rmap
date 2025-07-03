@@ -757,7 +757,7 @@ const AreasPage = () => {
           React.createElement('div', { style: { fontSize: '12px', color: '#666' } }, '관련 구역')
         ),
         React.createElement('div', { style: { textAlign: 'center' } },
-          React.createElement('div', { style: { fontSize: '18px', fontWeight: 'bold', color: '#ff6b6b' } },
+          React.createElement('div', { style: { fontSize: '18px', fontWeight: 'bold', color: '#ff9800' } },
             filteredAreas.filter(a => !a.salesTerritory?.managerName).length
           ),
           React.createElement('div', { style: { fontSize: '12px', color: '#666' } }, '미배정')
@@ -866,7 +866,7 @@ const AreasPage = () => {
                       : '#ffebee',
                     color: area.salesTerritory?.managerName ? 
                       (area.salesTerritory.managerName.includes('관리 구역 담당 없음') ? '#ef6c00' : '#2e7d32') 
-                      : '#c62828'
+                      : '#ff9800'
                   }
                 },
                 area.salesTerritory?.managerName ? 
