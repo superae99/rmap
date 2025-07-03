@@ -1,12 +1,12 @@
 import { Router } from 'express'
 import { AppDataSource } from '../config/database'
 import { User } from '../models/User'
-import { authorize } from '../middlewares/auth.middleware'
+import { authenticate, authorize } from '../middlewares/auth.middleware'
 
 const router = Router()
 
 // (스탭권한) 텍스트 제거 API
-router.post('/remove-staff-suffix', authorize('admin'), async (req, res) => {
+router.post('/remove-staff-suffix', authenticate, authorize('admin'), async (req, res) => {
   try {
     console.log('🔍 (스탭권한) 텍스트 제거 작업 시작...')
     
