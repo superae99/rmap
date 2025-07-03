@@ -1,0 +1,9 @@
+Deploy trigger: 2025-07-03 - Force Netlify rebuild and deployment
+
+Latest changes:
+- Added Netlify deployment configuration
+- Fixed login page security
+- Improved area color system
+- Updated environment variables
+
+This file is used to trigger Netlify deployment when needed.
