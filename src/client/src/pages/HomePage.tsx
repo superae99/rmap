@@ -227,7 +227,10 @@ const HomePage = () => {
       setPartners(partnersData.partners || partnersData)
       
       // 영역 데이터 로드
+      console.log('🌍 영역 데이터 로드 시작...')
       const areasData = await loadAreasData(filters, localStorage.getItem('token') || undefined)
+      console.log('✅ 로드된 영역 데이터:', areasData.length, '개')
+      console.log('🔍 첫 번째 영역:', areasData[0])
       setAreas(areasData)
 
 

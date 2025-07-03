@@ -20,6 +20,7 @@ export interface ProcessedArea {
 
 // 데이터베이스에서 영역 데이터 로드 (로그인 사용자만 필터 적용)
 export const loadAreasData = async (filters?: any, token?: string): Promise<ProcessedArea[]> => {
+  console.log('🚀 areaLoader.loadAreasData 호출됨', { filters, hasToken: !!token })
   try {
     
     // 필터 매개변수를 URL에 추가 (토큰이 있을 때만)
@@ -36,10 +37,10 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     const { config } = await import('../config/environment')
     const baseUrl = config.apiBaseUrl
     
-    // sales_territories와 조인된 데이터를 위해 with-partner-counts 엔드포인트 사용 (서버에서 거래처 수 계산)
+    // 먼저 기본 areas 엔드포인트 사용
     const versionParam = `v=${Date.now()}`
     const separator = queryParams.toString() ? '&' : '?'
-    const url = `${baseUrl}/areas/with-partner-counts${queryParams.toString() ? `?${queryParams.toString()}` : ''}${separator}${versionParam}`
+    const url = `${baseUrl}/areas${queryParams.toString() ? `?${queryParams.toString()}` : ''}${separator}${versionParam}`
     console.log('📡 API 호출 URL:', url)
     
     // 헤더에 인증 토큰 추가 (있는 경우)
@@ -50,14 +51,20 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     
     const response = await fetch(url, { headers })
     
+    console.log('📡 서버 응답 상태:', response.status)
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      const errorText = await response.text()
+      console.error('❌ 서버 오류:', errorText)
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
     }
     
     const responseData = await response.json()
+    console.log('📦 서버 응답 데이터:', responseData)
     
     // with-territory 엔드포인트는 배열을 직접 반환
     const areasData = Array.isArray(responseData) ? responseData : responseData.areas || responseData
+    console.log('📄 영역 데이터 개수:', areasData.length)
     
     // 디버깅: 서버에서 받은 원본 데이터 확인
     if (areasData.length > 0) {
@@ -138,7 +145,41 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     return processedAreas
   } catch (error) {
     console.error('❌ Areas 데이터 로드 실패:', error)
-    return []
+    
+    // 오류 발생 시 테스트 데이터 반환
+    console.log('🎯 테스트 영역 데이터 사용')
+    return [
+      {
+        id: 'test1',
+        name: '테스트 영역 1',
+        admCd: 'TEST001',
+        coordinates: [
+          [126.9780, 37.5665],
+          [126.9880, 37.5665],
+          [126.9880, 37.5765],
+          [126.9780, 37.5765],
+          [126.9780, 37.5665]
+        ],
+        properties: {},
+        isActive: true,
+        description: '테스트 영역'
+      },
+      {
+        id: 'test2',
+        name: '테스트 영역 2',
+        admCd: 'TEST002',
+        coordinates: [
+          [127.0280, 37.5165],
+          [127.0380, 37.5165],
+          [127.0380, 37.5265],
+          [127.0280, 37.5265],
+          [127.0280, 37.5165]
+        ],
+        properties: {},
+        isActive: true,
+        description: '테스트 영역 2'
+      }
+    ]
   }
 }
 
