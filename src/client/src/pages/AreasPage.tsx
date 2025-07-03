@@ -98,26 +98,36 @@ const AreasPage = () => {
   const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
 
 
-  // 모든 거래처 데이터 로드
+  // 필터가 적용될 때 거래처 데이터 로드
   useEffect(() => {
-    const loadAllPartners = async () => {
+    const loadFilteredPartners = async () => {
       try {
         setPartnersLoading(true)
-        const partnersResponse = await partnerAPI.getPartners({ 
-          limit: 100000 // 모든 거래처 로드
-        })
         
-        const partnersData = partnersResponse.partners || partnersResponse
-        const validPartners = Array.isArray(partnersData) ? partnersData.filter(partner => {
-          const lat = Number(partner.latitude)
-          const lng = Number(partner.longitude)
-          // 유효한 좌표가 있는 거래처만 필터링
-          return lat && lng && 
-                 lat >= 33 && lat <= 43 &&  // 한국 위도 범위
-                 lng >= 124 && lng <= 132   // 한국 경도 범위
-        }) : []
-        
-        setAllPartners(validPartners)
+        // 필터가 있을 때만 거래처 데이터 로드
+        if (filters.branchFilter || filters.officeFilter || filters.managerFilter) {
+          const partnersResponse = await partnerAPI.getPartners({ 
+            limit: 100000,
+            branchFilter: filters.branchFilter,
+            officeFilter: filters.officeFilter,
+            managerFilter: filters.managerFilter
+          })
+          
+          const partnersData = partnersResponse.partners || partnersResponse
+          const validPartners = Array.isArray(partnersData) ? partnersData.filter(partner => {
+            const lat = Number(partner.latitude)
+            const lng = Number(partner.longitude)
+            // 유효한 좌표가 있는 거래처만 필터링
+            return lat && lng && 
+                   lat >= 33 && lat <= 43 &&  // 한국 위도 범위
+                   lng >= 124 && lng <= 132   // 한국 경도 범위
+          }) : []
+          
+          setAllPartners(validPartners)
+        } else {
+          // 필터가 없으면 빈 배열
+          setAllPartners([])
+        }
       } catch (error) {
         console.error('거래처 데이터 로드 실패:', error)
         setAllPartners([])
@@ -126,8 +136,8 @@ const AreasPage = () => {
       }
     }
 
-    loadAllPartners()
-  }, [])
+    loadFilteredPartners()
+  }, [filters.branchFilter, filters.officeFilter, filters.managerFilter])
 
   // 로딩 상태 메시지 컴포넌트
   const [loadingMessage, setLoadingMessage] = useState('')
