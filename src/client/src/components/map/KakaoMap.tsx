@@ -144,6 +144,13 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       // 인포윈도우 생성
       infoWindowRef.current = new window.kakao.maps.InfoWindow({ zIndex: 1 });
       
+      // 모달이나 동적으로 크기가 변하는 컨테이너를 위한 리사이즈 처리
+      setTimeout(() => {
+        if (mapInstance.current && mapInstance.current.relayout) {
+          mapInstance.current.relayout();
+        }
+      }, 100);
+      
       // 영역용 커스텀 툴팁 생성
       if (!areaTooltipRef.current) {
         areaTooltipRef.current = document.createElement('div');

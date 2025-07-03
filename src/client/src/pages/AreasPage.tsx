@@ -1061,6 +1061,7 @@ const AreasPage = () => {
             React.createElement('div',
               { style: { width: '100%', height: '300px', borderRadius: '8px', overflow: 'hidden', position: 'relative' } },
               selectedArea ? React.createElement(KakaoMap, {
+                key: `area-detail-map-${selectedArea.id}-${Date.now()}`, // 모달 열릴 때마다 지도 새로 생성
                 width: '100%',
                 height: '300px',
                 staticMode: true,
