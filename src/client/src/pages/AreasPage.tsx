@@ -326,13 +326,18 @@ const AreasPage = () => {
           id: area.id,
           name: area.name,
           coordinates: area.coordinates,
-          color: '#667eea',
-          strokeColor: '#667eea',
-          strokeWeight: 2,
-          opacity: 0.2,
+          color: area.color || '#667eea',
+          strokeColor: area.strokeColor || '#667eea', 
+          strokeWeight: area.strokeWeight || 2,
+          opacity: area.fillOpacity || 0.2,
           data: {
             ...displayInfo,
-            properties: area.properties
+            properties: area.properties,
+            // 색상 정보를 data에 포함하여 모달에서 사용
+            color: area.color || '#667eea',
+            strokeColor: area.strokeColor || '#667eea',
+            strokeWeight: area.strokeWeight || 2,
+            fillOpacity: area.fillOpacity || 0.3
           }
         }
       })
@@ -991,22 +996,20 @@ const AreasPage = () => {
                   opacity: selectedArea.fillOpacity || 0.3
                 }] : [],
                 markers: selectedArea.partnersInArea ? (() => {
-                  // 공통 색상 팔레트
-                  const colorPalette = [
-                    '#FF0000', // 빨강
-                    '#0000FF', // 파랑
-                    '#00FF00', // 초록
-                    '#FFD700', // 금색
-                    '#9400D3', // 보라
-                    '#00FFFF'  // 시안
-                  ]
-                  
+                  // 확장된 색상 팔레트 (더 많은 담당자 지원)
+                  const generateColor = (index: number) => {
+                    const hues = [0, 240, 120, 60, 300, 180, 30, 270, 150, 330, 90, 210]
+                    const hue = hues[index % hues.length]
+                    const saturation = 70 + (Math.floor(index / hues.length) * 15) % 30
+                    const lightness = 50 + (Math.floor(index / hues.length) * 10) % 20
+                    return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+                  }
 
-                  // 고유 담당자 목록 생성 및 색상 순서대로 할당
+                  // 고유 담당자 목록 생성 및 동적 색상 할당
                   const uniqueManagers = [...new Set(selectedArea.partnersInArea.map(p => p.currentManagerName))].filter(Boolean)
                   const managerColorMap = new Map()
                   uniqueManagers.forEach((manager, index) => {
-                    managerColorMap.set(manager, colorPalette[index % colorPalette.length])
+                    managerColorMap.set(manager, generateColor(index))
                   })
 
                   return selectedArea.partnersInArea.map(partner => ({
@@ -1015,14 +1018,19 @@ const AreasPage = () => {
                     longitude: Number(partner.longitude),
                     title: partner.partnerName,
                     rtmChannel: partner.channel,
-                    markerColor: partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#666666' : '#666666',
+                    markerColor: partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#999999' : '#cccccc',
                     content: `
-                      <div style="padding: 8px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                        <h4 style="margin: 0 0 8px 0; color: #333;">${partner.partnerName}</h4>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">코드: ${partner.partnerCode}</div>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">채널: ${partner.channel || '기타'}</div>
-                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;">담당자: ${partner.currentManagerName || '미지정'}</div>
-                        ${partner.businessAddress ? `<div style="font-size: 11px; color: #999; margin-top: 8px;">${partner.businessAddress}</div>` : ''}
+                      <div style="padding: 10px; min-width: 220px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-radius: 8px;">
+                        <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">${partner.partnerName}</h4>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;"><strong>코드:</strong> ${partner.partnerCode}</div>
+                        <div style="font-size: 12px; color: #666; margin-bottom: 4px;"><strong>채널:</strong> ${partner.channel || '기타'}</div>
+                        <div style="font-size: 12px; margin-bottom: 4px;">
+                          <strong>담당자:</strong> 
+                          <span style="color: ${partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#999999' : '#cccccc'}; font-weight: bold;">
+                            ${partner.currentManagerName || '미지정'}
+                          </span>
+                        </div>
+                        ${partner.businessAddress ? `<div style="font-size: 11px; color: #999; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">${partner.businessAddress}</div>` : ''}
                       </div>
                     `
                   })).filter(marker => !isNaN(marker.latitude) && !isNaN(marker.longitude))
@@ -1046,31 +1054,36 @@ const AreasPage = () => {
               React.createElement('div', 
                 { style: { display: 'flex', flexWrap: 'wrap', gap: '10px' } },
                 (() => {
-                  // 지도와 동일한 색상 팔레트
-                  const colorPalette = [
-                    '#FF0000', // 빨강
-                    '#0000FF', // 파랑
-                    '#00FF00', // 초록
-                    '#FFD700', // 금색
-                    '#9400D3', // 보라
-                    '#00FFFF'  // 시안
-                  ]
+                  // 지도와 동일한 색상 생성 함수
+                  const generateColor = (index: number) => {
+                    const hues = [0, 240, 120, 60, 300, 180, 30, 270, 150, 330, 90, 210]
+                    const hue = hues[index % hues.length]
+                    const saturation = 70 + (Math.floor(index / hues.length) * 15) % 30
+                    const lightness = 50 + (Math.floor(index / hues.length) * 10) % 20
+                    return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+                  }
 
-                  // 고유 담당자 목록 생성 및 색상 순서대로 할당
+                  // 고유 담당자 목록 생성 및 동적 색상 할당
                   const uniqueManagers = [...new Set(selectedArea.partnersInArea.map(p => p.currentManagerName))].filter(Boolean)
                   const managerColorMap = new Map()
                   uniqueManagers.forEach((manager, index) => {
-                    managerColorMap.set(manager, colorPalette[index % colorPalette.length])
+                    managerColorMap.set(manager, generateColor(index))
                   })
-                  return uniqueManagers.map(managerName =>
-                    React.createElement('div', 
+                  
+                  return uniqueManagers.map(managerName => {
+                    const partnerCount = selectedArea.partnersInArea?.filter(p => p.currentManagerName === managerName).length || 0
+                    return React.createElement('div', 
                       { 
                         key: managerName,
                         style: { 
                           display: 'flex', 
                           alignItems: 'center', 
-                          gap: '6px',
-                          fontSize: '12px'
+                          gap: '8px',
+                          fontSize: '12px',
+                          padding: '4px 8px',
+                          backgroundColor: 'white',
+                          borderRadius: '4px',
+                          border: '1px solid #e0e0e0'
                         } 
                       },
                       React.createElement('div', {
@@ -1078,13 +1091,23 @@ const AreasPage = () => {
                           width: '16px',
                           height: '16px',
                           borderRadius: '50%',
-                          backgroundColor: managerColorMap.get(managerName) || '#666666',
-                          border: '1px solid #ddd'
+                          backgroundColor: managerColorMap.get(managerName) || '#999999',
+                          border: '2px solid white',
+                          boxShadow: '0 0 0 1px #ddd'
                         }
                       }),
-                      React.createElement('span', null, managerName)
+                      React.createElement('span', { style: { fontWeight: '500' } }, managerName),
+                      React.createElement('span', { 
+                        style: { 
+                          fontSize: '11px', 
+                          color: '#666',
+                          backgroundColor: '#f5f5f5',
+                          padding: '2px 6px',
+                          borderRadius: '10px'
+                        } 
+                      }, `${partnerCount}개`)
                     )
-                  )
+                  })
                 })()
               )
             ),

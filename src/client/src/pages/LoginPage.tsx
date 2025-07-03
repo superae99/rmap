@@ -28,11 +28,31 @@ const LoginPage = () => {
     try {
       const response = await authAPI.login(account, password)
       console.log('로그인 성공:', response)
-      // 로그인 성공 시 페이지 새로고침 (URL 변경 없이)
+      // 로그인 성공 시에만 페이지 새로고침 (URL 변경 없이)
       window.location.reload()
-    } catch (err) {
+    } catch (err: any) {
       console.error('로그인 실패:', err)
-      setError('계정 또는 비밀번호가 올바르지 않습니다.')
+      
+      // 입력 정보가 틀렸을 때 페이지 이동하지 않고 에러 메시지만 표시
+      const errorMessage = err?.response?.data?.message || 
+                          err?.message || 
+                          '계정 또는 비밀번호가 올바르지 않습니다.'
+      
+      setError(errorMessage)
+      
+      // 비밀번호 필드 초기화 (보안)
+      setPassword('')
+      
+      // 계정 필드에 포커스 (사용자 편의)
+      setTimeout(() => {
+        const accountInput = document.querySelector('input[type="text"]') as HTMLInputElement
+        if (accountInput) {
+          accountInput.focus()
+        }
+      }, 100)
+      
+      // 로그인 실패 시 페이지 이동하지 않음 (기본 동작 유지)
+      return false
     } finally {
       setLoading(false)
     }

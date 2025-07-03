@@ -6,6 +6,10 @@ export interface ProcessedArea {
   properties: any
   isActive: boolean
   description?: string
+  color?: string
+  strokeColor?: string
+  strokeWeight?: number
+  fillOpacity?: number
   salesTerritory?: {
     territoryId: number
     branchName: string
@@ -122,6 +126,10 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
           properties,
           isActive: area.isActive, // isActive 필드 추가
           description: area.description,
+          color: area.color, // 색상 정보 추가
+          strokeColor: area.strokeColor,
+          strokeWeight: area.strokeWeight,
+          fillOpacity: area.fillOpacity,
           salesTerritory: area.salesTerritory // salesTerritory 정보 추가
         }
       })
