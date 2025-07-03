@@ -432,9 +432,9 @@ const AreasPage = () => {
       hash = managerEmployeeId.charCodeAt(i) + ((hash << 5) - hash)
     }
     
-    // 더 다양하고 구분되는 색상 팔레트
+    // 더 다양하고 구분되는 색상 팔레트 (부드러운 색상으로 조정)
     const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3',
+      '#FF9800', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3',
       '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43', '#A55EEA', '#26DE81',
       '#FD79A8', '#FDCB6E', '#6C5CE7', '#74B9FF'
     ]
