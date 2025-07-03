@@ -82,22 +82,28 @@ export const getAreasWithSalesTerritory = async (req: Request & { user?: any }, 
       const userJobTitle = req.user.jobTitle || ''
       const userAccount = req.user.account || ''
 
-      // admin 계정: 모든 필터 사용 가능
+      // admin 계정: 필터가 있을 때만 데이터 조회 가능
       if (userAccount === 'admin' || userJobTitle.includes('시스템관리자')) {
         
-        // 지사 필터 적용
-        if (branchFilter) {
-          query.andWhere('territory.branchName = :branchFilter', { branchFilter })
-        }
-        
-        // 지점 필터 적용
-        if (officeFilter) {
-          query.andWhere('territory.officeName = :officeFilter', { officeFilter })
-        }
-        
-        // 담당 필터 적용
-        if (managerFilter) {
-          query.andWhere('territory.managerEmployeeId = :managerFilter', { managerFilter })
+        // 관리자도 최소 1개 이상의 필터가 있어야 함
+        if (!branchFilter && !officeFilter && !managerFilter) {
+          // 필터가 없으면 빈 결과 반환
+          query.andWhere('1 = 0') // 데이터 없음
+        } else {
+          // 지사 필터 적용
+          if (branchFilter) {
+            query.andWhere('territory.branchName = :branchFilter', { branchFilter })
+          }
+          
+          // 지점 필터 적용
+          if (officeFilter) {
+            query.andWhere('territory.officeName = :officeFilter', { officeFilter })
+          }
+          
+          // 담당 필터 적용
+          if (managerFilter) {
+            query.andWhere('territory.managerEmployeeId = :managerFilter', { managerFilter })
+          }
         }
       }
       // 지점장 계정: 해당 지점 소속만
