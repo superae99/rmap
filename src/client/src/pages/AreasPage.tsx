@@ -415,13 +415,25 @@ const AreasPage = () => {
         
         // 마커 데이터 미리 생성 (최대 50개로 제한하여 성능 향상)
         const limitedPartners = area.partnersInArea.slice(0, 50)
-        const markers = limitedPartners.map(partner => ({
-          id: partner.partnerCode,
-          latitude: Number(partner.latitude),
-          longitude: Number(partner.longitude),
-          title: partner.partnerName,
-          rtmChannel: partner.channel,
-          markerColor: partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#999999' : '#cccccc',
+        console.log('🔍 Creating markers for partners:', limitedPartners.length)
+        
+        const markers = limitedPartners.map(partner => {
+          const lat = Number(partner.latitude)
+          const lng = Number(partner.longitude)
+          
+          // 좌표 유효성 검사
+          if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+            console.warn('🔍 Invalid coordinates for partner:', partner.partnerCode, lat, lng)
+            return null
+          }
+          
+          return {
+            id: partner.partnerCode,
+            latitude: lat,
+            longitude: lng,
+            title: partner.partnerName,
+            rtmChannel: partner.channel || 'default', // 기본값 설정
+            markerColor: partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#999999' : '#cccccc',
           content: `
             <div style="padding: 10px; min-width: 220px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-radius: 8px;">
               <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">${partner.partnerName}</h4>
@@ -436,7 +448,10 @@ const AreasPage = () => {
               ${partner.businessAddress ? `<div style="font-size: 11px; color: #999; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">${partner.businessAddress}</div>` : ''}
             </div>
           `
-        })).filter(marker => !isNaN(marker.latitude) && !isNaN(marker.longitude))
+          }
+        }).filter(marker => marker !== null) // null 제거
+        
+        console.log('🔍 Valid markers created:', markers.length)
         
         // 영역 좌표 정규화
         const normalizedCoordinates = normalizeCoordinates(area.coordinates)
