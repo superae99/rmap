@@ -6,7 +6,6 @@ export interface ProcessedArea {
   properties: any
   isActive: boolean
   description?: string
-  partnerCount?: number
   salesTerritory?: {
     territoryId: number
     branchName: string
@@ -37,12 +36,8 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     const { config } = await import('../config/environment')
     const baseUrl = config.apiBaseUrl
     
-    // sales_territories와 조인된 데이터를 위해 with-partner-counts 엔드포인트 사용 (서버에서 거래처 수 계산)
-    const versionParam = `v=${Date.now()}`
-    const separator = queryParams.toString() ? '&' : '?'
-    const url = `${baseUrl}/areas/with-partner-counts${queryParams.toString() ? `?${queryParams.toString()}` : ''}${separator}${versionParam}`
-    console.log('📡 areas-service API 호출 URL:', url)
-    console.log('🔍 새 엔드포인트 with-partner-counts 사용 중!')
+    // sales_territories와 조인된 데이터를 위해 with-sales-territory 엔드포인트 사용
+    const url = `${baseUrl}/areas/with-sales-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     
     // 헤더에 인증 토큰 추가 (있는 경우)
     const headers: HeadersInit = {}
@@ -58,15 +53,8 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     
     const responseData = await response.json()
     
-    // 간단한 alert로 핵심 정보만 확인
-    if (responseData.meta) {
-      alert(`✅ API 성공!\n엔드포인트: ${responseData.meta.endpoint}\n총 거래처: ${responseData.meta.totalPartners}개\n상권 수: ${responseData.meta.totalAreas}개`)
-    } else {
-      alert(`⚠️ 구 형식 응답 (meta 없음)\n상권 수: ${Array.isArray(responseData) ? responseData.length : '알 수 없음'}`)
-    }
-    
-    // with-partner-counts 엔드포인트는 {areas: [...], meta: {...}} 구조로 반환
-    const areasData = responseData.areas || responseData
+    // with-territory 엔드포인트는 배열을 직접 반환
+    const areasData = Array.isArray(responseData) ? responseData : responseData.areas || responseData
     
     // 디버깅: 서버에서 받은 원본 데이터 확인
     if (areasData.length > 0) {
@@ -134,7 +122,6 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
           properties,
           isActive: area.isActive, // isActive 필드 추가
           description: area.description,
-          partnerCount: area.partnerCount || 0, // 서버에서 계산된 거래처 수
           salesTerritory: area.salesTerritory // salesTerritory 정보 추가
         }
       })

@@ -28,13 +28,14 @@ disk: 1024
 # Build hooks
 hooks:
   build: |
+    cd src/server
     npm ci
     npm run build
 
 # Web configuration
 web:
   commands:
-    start: 'node dist/index.js'
+    start: 'cd src/server && node dist/index.js'
   
   locations:
     '/':
