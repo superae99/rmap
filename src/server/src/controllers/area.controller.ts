@@ -46,14 +46,101 @@ const isPointInPolygon = (point: [number, number], polygon: number[][]): boolean
 }
 
 // 영역 목록 조회
-export const getAreas = async (req: Request, res: Response) => {
+export const getAreas = async (req: Request & { user?: any }, res: Response) => {
   try {
-    const areas = await areaRepository.find({
-      order: { createdAt: 'DESC' }
-    })
-
-    res.json(areas)
+    console.log('🌐 getAreas 엔드포인트 호출됨')
+    console.log('🔍 요청 쿼리:', req.query)
+    console.log('👤 사용자 정보:', req.user ? req.user.employeeId : '비로그인')
+    
+    const { 
+      branchFilter,    // 지사 필터
+      officeFilter,    // 지점 필터
+      managerFilter    // 담당 필터
+    } = req.query
+    
+    // 토큰이 있는 경우 인증 시도 (선택적 인증)
+    if (req.headers.authorization) {
+      try {
+        const { authenticate } = await import('../middlewares/auth.middleware')
+        await new Promise<void>((resolve, reject) => {
+          authenticate(req as any, res as any, (err?: any) => {
+            if (err) reject(err)
+            else resolve()
+          })
+        })
+      } catch (error) {
+        console.log('⚠️ 인증 실패, 비로그인 상태로 계속')
+        req.user = undefined
+      }
+    }
+    
+    // areas와 sales_territories를 조인하여 데이터 조회
+    const query = areaRepository
+      .createQueryBuilder('area')
+      .leftJoin(SalesTerritory, 'territory', 'territory.admCd = area.admCd')
+      .select([
+        'area.id',
+        'area.name', 
+        'area.coordinates',
+        'area.topojson',
+        'area.color',
+        'area.strokeColor',
+        'area.strokeWeight',
+        'area.fillOpacity',
+        'area.description',
+        'area.admCd',
+        'area.properties',
+        'area.isActive',
+        'area.createdAt',
+        'area.updatedAt'
+      ])
+      .addSelect([
+        'territory.territoryId',
+        'territory.branchName',
+        'territory.officeName', 
+        'territory.managerName',
+        'territory.managerEmployeeId',
+        'territory.sido',
+        'territory.gungu',
+        'territory.admNm'
+      ])
+      .where('1 = 1')
+      
+    const areas = await query.getRawMany()
+    
+    console.log(`✅ ${areas.length}개 영역 조회 완료`)
+    
+    // 데이터 형식 변환
+    const formattedAreas = areas.map(row => ({
+      id: row.area_id,
+      name: row.area_name,
+      coordinates: row.area_coordinates,
+      topojson: row.area_topojson,
+      color: row.area_color,
+      strokeColor: row.area_strokeColor,
+      strokeWeight: row.area_strokeWeight,
+      fillOpacity: row.area_fillOpacity,
+      description: row.area_description,
+      admCd: row.area_admCd,
+      properties: row.area_properties,
+      isActive: row.area_isActive,
+      createdAt: row.area_createdAt,
+      updatedAt: row.area_updatedAt,
+      salesTerritory: row.territory_territoryId ? {
+        territoryId: row.territory_territoryId,
+        branchName: row.territory_branchName,
+        officeName: row.territory_officeName,
+        managerName: row.territory_managerName,
+        managerEmployeeId: row.territory_managerEmployeeId,
+        sido: row.territory_sido,
+        gungu: row.territory_gungu,
+        admNm: row.territory_admNm
+      } : null
+    }))
+    
+    res.json(formattedAreas)
   } catch (error) {
+    console.error('❌ 영역 조회 오류:', error)
     res.status(500).json({ message: '서버 오류가 발생했습니다.' })
   }
 }
