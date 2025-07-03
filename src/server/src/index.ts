@@ -8,6 +8,7 @@ import partnerRoutes from './routes/partner.routes'
 import areaRoutes from './routes/area.routes'
 import salesTerritoryRoutes from './routes/sales-territory.routes'
 import kakaoRoutes from './routes/kakao.routes'
+import adminRoutes from './routes/admin.routes'
 import { errorHandler } from './middlewares/error.middleware'
 
 dotenv.config()
@@ -55,6 +56,7 @@ app.use('/api/partners', partnerRoutes)
 app.use('/api/areas', areaRoutes)
 app.use('/api/sales-territories', salesTerritoryRoutes)
 app.use('/api/kakao', kakaoRoutes)
+app.use('/api/admin', adminRoutes)
 
 // Health check
 app.get('/health', (req, res) => {
