@@ -97,51 +97,17 @@ const testing: EnvironmentConfig = {
   },
 };
 
-// Parse Platform.sh database credentials
-let dbConfig = {
-  host: process.env.DB_HOST || 'mysql-prod',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  username: process.env.DB_USERNAME || '',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_DATABASE || 'kakao_map_prod',
-};
-
-// Platform.sh provides database credentials in PLATFORM_RELATIONSHIPS
-if (process.env.PLATFORM_RELATIONSHIPS) {
-  try {
-    const relationships = JSON.parse(Buffer.from(process.env.PLATFORM_RELATIONSHIPS, 'base64').toString());
-    console.log('🔍 Platform.sh relationships keys:', Object.keys(relationships));
-    
-    // Platform.sh uses the relationship name from .platform.app.yaml
-    const dbRelationship = relationships.database;
-    if (dbRelationship && dbRelationship[0]) {
-      const db = dbRelationship[0];
-      dbConfig = {
-        host: db.host,
-        port: db.port,
-        username: db.username,
-        password: db.password,
-        database: db.path,
-      };
-      console.log('✅ Database config loaded from Platform.sh:', {
-        host: db.host,
-        port: db.port,
-        username: db.username,
-        database: db.path
-      });
-    }
-  } catch (error) {
-    console.error('Failed to parse PLATFORM_RELATIONSHIPS:', error);
-  }
-}
-
 const production: EnvironmentConfig = {
   env: 'production',
-  port: parseInt(process.env.PORT || '8888'),
+  port: parseInt(process.env.PORT || '5001'),
   apiUrl: process.env.API_URL || 'https://api.your-domain.com',
   corsOrigin: process.env.CORS_ORIGIN || 'https://app.your-domain.com',
   database: {
-    ...dbConfig,
+    host: process.env.DB_HOST || 'mysql-prod',
+    port: parseInt(process.env.DB_PORT || '3306'),
+    username: process.env.DB_USERNAME || '',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_DATABASE || 'kakao_map_prod',
     logging: false,
     synchronize: false, // Never auto-sync in production
   },
