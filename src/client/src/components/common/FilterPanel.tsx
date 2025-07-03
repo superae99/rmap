@@ -31,8 +31,28 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const hasAnyFilter = Object.values(filters).some(value => value && value !== '')
 
-  // 지점장 권한 체크
+  // 권한 체크
   const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
+  const isStaff = user?.position?.includes('스탭') || user?.jobTitle?.includes('스탭')
+  const isAdmin = user?.account === 'admin' || user?.jobTitle?.includes('시스템관리자')
+  const isStaffOrAdmin = isStaff || isAdmin
+
+  // 디버깅: 권한 정보 출력 (개발 환경에서만)
+  React.useEffect(() => {
+    if (user) {
+      console.log('FilterPanel 권한 체크:', {
+        user: user.employeeName,
+        position: user.position,
+        jobTitle: user.jobTitle,
+        account: user.account,
+        isBranchManager,
+        isStaff,
+        isAdmin,
+        isStaffOrAdmin,
+        shouldShowAllFilters: !isBranchManager || isStaffOrAdmin
+      })
+    }
+  }, [user, isBranchManager, isStaff, isAdmin, isStaffOrAdmin])
 
   // 선택된 지사에 따른 지점 필터링
   const filteredOffices = filters.branchFilter 
@@ -71,8 +91,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       <div className="filter-controls">
-        {/* 지사 필터 - 지점장에게는 숨김 */}
-        {!isBranchManager && options.branches.length > 0 && (
+        {/* 지사 필터 - 지점장에게는 숨김, staff/admin은 모두 볼 수 있음 */}
+        {(!isBranchManager || isStaffOrAdmin) && options.branches.length > 0 && (
           <div className="filter-group">
             <label>지사</label>
             <select
@@ -89,8 +109,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
         )}
 
-        {/* 지점 필터 - 지점장에게는 숨김 */}
-        {!isBranchManager && options.offices.length > 0 && (
+        {/* 지점 필터 - 지점장에게는 숨김, staff/admin은 모두 볼 수 있음 */}
+        {(!isBranchManager || isStaffOrAdmin) && options.offices.length > 0 && (
           <div className="filter-group">
             <label>지점</label>
             <select

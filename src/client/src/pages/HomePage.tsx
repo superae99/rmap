@@ -64,7 +64,7 @@ const HomePage = () => {
   })
 
   // 새로운 필터링 시스템 사용
-  const { options, filters, updateFilter, resetFilters } = useFilters()
+  const { options, filters, updateFilter, resetFilters, loadFilterOptions } = useFilters()
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -77,6 +77,9 @@ const HomePage = () => {
 
         const userData = await authAPI.getProfile()
         setUser(userData)
+        
+        // 사용자 정보 로드 후 필터 옵션 다시 로드
+        await loadFilterOptions()
         
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error)
@@ -285,6 +288,14 @@ const HomePage = () => {
       // RTM 채널 사용 (실제 데이터 확인)
       const rtmChannel = partner.rtmChannel || mapChannelToRTM(partner.channel)
       
+      // 담당자 변경 권한 체크 (staff는 조회만 가능)
+      const canChangeManager = user && (
+        user.account === 'admin' || 
+        user.jobTitle?.includes('시스템관리자') ||
+        user.position?.includes('지점장') || 
+        user.jobTitle?.includes('지점장')
+      ) && !(user.position?.includes('스탭') || user.jobTitle?.includes('스탭'))
+      
       // 디버깅용 로그 (처음 10개만)
       if (index < 10) {
       }
@@ -318,6 +329,7 @@ const HomePage = () => {
                     <div style="font-size: 13px; color: #333; line-height: 1.4;">${partner.businessAddress}</div>
                   </div>
                 ` : ''}
+                ${canChangeManager ? `
                 <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee;">
                   <button 
                     id="change-manager-${partner.partnerCode}"
@@ -341,6 +353,7 @@ const HomePage = () => {
                     담당자 변경
                   </button>
                 </div>
+                ` : ''}
               </div>
             </div>
           </div>
@@ -981,7 +994,7 @@ const HomePage = () => {
                       {
                         type: 'color',
                         value: color,
-                        onChange: (e: any) => changeManagerColor(employeeId, e.target.value),
+                        onChange: (e: any) => changeManagerColor(employeeId || '', e.target.value),
                         style: {
                           width: '16px',
                           height: '16px',
@@ -1002,9 +1015,9 @@ const HomePage = () => {
                     { style: { color: '#333', flex: 1 } }, 
                     `${manager?.currentManagerName || '이름미상'} (${employeeId})`
                   ),
-                  customManagerColors[employeeId] && React.createElement('button',
+                  customManagerColors[employeeId || ''] && React.createElement('button',
                     {
-                      onClick: () => resetManagerColor(employeeId),
+                      onClick: () => resetManagerColor(employeeId || ''),
                       style: {
                         background: 'none',
                         border: 'none',
