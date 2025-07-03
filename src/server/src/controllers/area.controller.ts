@@ -82,8 +82,9 @@ export const getAreasWithSalesTerritory = async (req: Request & { user?: any }, 
       const userJobTitle = req.user.jobTitle || ''
       const userAccount = req.user.account || ''
 
-      // admin 계정: 필터가 있을 때만 데이터 조회 가능
-      if (userAccount === 'admin' || userJobTitle.includes('시스템관리자')) {
+      // admin/staff 계정: 필터가 있을 때만 데이터 조회 가능
+      if (userAccount === 'admin' || userJobTitle.includes('시스템관리자') || 
+          userPosition.includes('스탭') || userJobTitle.includes('스탭')) {
         
         // 관리자도 최소 1개 이상의 필터가 있어야 함
         if (!branchFilter && !officeFilter && !managerFilter) {

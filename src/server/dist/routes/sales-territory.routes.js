@@ -6,19 +6,19 @@ const router = (0, express_1.Router)();
 // 모든 라우트에 인증 필요
 router.use(auth_middleware_1.authenticate);
 // TODO: Implement sales territory controller
-router.get('/', (req, res) => {
+router.get('/', (0, auth_middleware_1.authorize)('admin', 'staff', 'manager', 'user'), (req, res) => {
     res.json({ message: 'Get all sales territories' });
 });
-router.get('/:territoryId', (req, res) => {
+router.get('/:territoryId', (0, auth_middleware_1.authorize)('admin', 'staff', 'manager', 'user'), (req, res) => {
     res.json({ message: `Get sales territory ${req.params.territoryId}` });
 });
-router.post('/', (0, auth_middleware_1.authorize)('팀장', '부장', '임원'), (req, res) => {
+router.post('/', (0, auth_middleware_1.authorize)('manager', 'admin'), (req, res) => {
     res.json({ message: 'Create sales territory' });
 });
-router.put('/:territoryId', (0, auth_middleware_1.authorize)('팀장', '부장', '임원'), (req, res) => {
+router.put('/:territoryId', (0, auth_middleware_1.authorize)('manager', 'admin'), (req, res) => {
     res.json({ message: `Update sales territory ${req.params.territoryId}` });
 });
-router.delete('/:territoryId', (0, auth_middleware_1.authorize)('부장', '임원'), (req, res) => {
+router.delete('/:territoryId', (0, auth_middleware_1.authorize)('admin'), (req, res) => {
     res.json({ message: `Delete sales territory ${req.params.territoryId}` });
 });
 exports.default = router;

@@ -35,8 +35,9 @@ export const getPartners = async (req: Request & { user?: any }, res: Response) 
       const userJobTitle = req.user.jobTitle || ''
       const userAccount = req.user.account || ''
 
-      // admin 계정: 모든 필터 사용 가능
-      if (userAccount === 'admin' || userJobTitle.includes('시스템관리자')) {
+      // admin/staff 계정: 모든 필터 사용 가능
+      if (userAccount === 'admin' || userJobTitle.includes('시스템관리자') || 
+          userPosition.includes('스탭') || userJobTitle.includes('스탭')) {
         
         // 지사 필터 적용
         if (branchFilter) {
@@ -445,8 +446,9 @@ export const getFilterOptions = async (req: Request & { user?: any }, res: Respo
     let offices: any[] = []
     let managers: any[] = []
 
-    // admin 계정: 실제 거래처 데이터가 있는 모든 필터 옵션 제공
-    if (userAccount === 'admin' || userJobTitle.includes('시스템관리자')) {
+    // admin/staff 계정: 실제 거래처 데이터가 있는 모든 필터 옵션 제공
+    if (userAccount === 'admin' || userJobTitle.includes('시스템관리자') || 
+        userPosition.includes('스탭') || userJobTitle.includes('스탭')) {
       // 지사 목록 (실제 거래처가 있는 지사만)
       const branchData = await userRepository
         .createQueryBuilder('user')

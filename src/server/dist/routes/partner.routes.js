@@ -6,11 +6,11 @@ const partner_controller_1 = require("../controllers/partner.controller");
 const router = (0, express_1.Router)();
 // 모든 라우트에 인증 필요
 router.use(auth_middleware_1.authenticate);
-// 필터 옵션 조회
-router.get('/filter-options', partner_controller_1.getFilterOptions);
+// 필터 옵션 조회 (staff 포함 - 조회 권한)
+router.get('/filter-options', (0, auth_middleware_1.authorize)('admin', 'staff', 'manager', 'user'), partner_controller_1.getFilterOptions);
 // 거래처 CRUD
-router.get('/', partner_controller_1.getPartners);
-router.get('/:partnerCode', partner_controller_1.getPartner);
+router.get('/', (0, auth_middleware_1.authorize)('admin', 'staff', 'manager', 'user'), partner_controller_1.getPartners);
+router.get('/:partnerCode', (0, auth_middleware_1.authorize)('admin', 'staff', 'manager', 'user'), partner_controller_1.getPartner);
 router.post('/', (0, auth_middleware_1.authorize)('manager', 'admin'), partner_controller_1.createPartner);
 router.put('/:partnerCode', (0, auth_middleware_1.authorize)('manager', 'admin'), partner_controller_1.updatePartner);
 router.delete('/:partnerCode', (0, auth_middleware_1.authorize)('admin'), partner_controller_1.deletePartner);

@@ -39,6 +39,29 @@ const createAdminUser = async () => {
 
     await userRepository.save(adminUser)
 
+    // staff 권한 사용자도 생성 (예시)
+    const existingStaff = await userRepository.findOne({
+      where: { account: 'staff' }
+    })
+
+    if (!existingStaff) {
+      const staffUser = userRepository.create({
+        employeeId: 'STAFF001',
+        employeeName: '스탭사용자',
+        account: 'staff',
+        password: hashedPassword,
+        position: '스탭', // staff 권한 감지용
+        jobTitle: '데이터분석스탭',
+        headquartersName: '본사',
+        branchName: '데이터분석부',
+        officeName: '데이터분석팀',
+        isActive: true,
+        workStatus: '재직',
+        employmentType: '정규직'
+      })
+
+      await userRepository.save(staffUser)
+    }
 
     // 생성된 계정 검증
     const createdAdmin = await userRepository.findOne({
