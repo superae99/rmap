@@ -20,7 +20,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const navItems = [
     { id: 'home', icon: '', label: '홈' },
     { id: 'partners', icon: '', label: '거래처' },
-    { id: 'areas', icon: '', label: '상권' }
+    { id: 'areas', icon: '', label: '상권' },
+    { id: 'guide', icon: '', label: '가이드' }
   ]
 
   const toggleMenu = () => setMenuOpen(!menuOpen)

@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import PartnersPage from './pages/PartnersPage';
 import AreasPage from './pages/AreasPage';
+import GuidePage from './pages/GuidePage';
 import MobileNavigation from './components/layout/MobileNavigation';
 import { authAPI } from './services/api';
 
@@ -228,22 +229,17 @@ function App() {
               },
               '상권 관리'
             ),
-            React.createElement('a',
+            React.createElement('button',
               {
-                href: '/user_guide.html',
-                target: '_blank',
+                onClick: () => navigateTo('guide'),
                 style: {
-                  background: 'none',
+                  background: currentPage === 'guide' ? 'rgba(255,255,255,0.3)' : 'none',
                   border: 'none',
                   color: 'white',
                   padding: '8px 16px',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  fontSize: '14px',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
+                  fontSize: '14px'
                 }
               },
               '사용 가이드'
@@ -302,6 +298,8 @@ function App() {
         return React.createElement(PartnersPage);
       case 'areas':
         return React.createElement(AreasPage);
+      case 'guide':
+        return React.createElement(GuidePage);
       default:
         const homePageElement = React.createElement(HomePage);
         return homePageElement;
