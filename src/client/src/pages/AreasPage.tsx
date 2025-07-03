@@ -35,6 +35,68 @@ const normalizeCoordinates = (coordinates: number[][] | any): number[][] => {
   return coordinates as number[][]
 }
 
+// 영역들의 경계를 계산하여 중앙 좌표와 줌 레벨을 구하는 함수
+const calculateMapBounds = (areas: ExtendedProcessedArea[]) => {
+  if (!areas || areas.length === 0) {
+    return {
+      centerLat: 37.5665, // 서울 중심
+      centerLng: 126.9780,
+      level: 10
+    }
+  }
+
+  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180
+
+  areas.forEach(area => {
+    if (area.coordinates && area.coordinates.length > 0) {
+      area.coordinates.forEach(coord => {
+        const [lng, lat] = coord
+        if (lat < minLat) minLat = lat
+        if (lat > maxLat) maxLat = lat
+        if (lng < minLng) minLng = lng
+        if (lng > maxLng) maxLng = lng
+      })
+    }
+  })
+
+  // 경계가 유효하지 않으면 기본값 반환
+  if (minLat === 90 || maxLat === -90 || minLng === 180 || maxLng === -180) {
+    return {
+      centerLat: 37.5665,
+      centerLng: 126.9780,
+      level: 10
+    }
+  }
+
+  // 중앙 좌표 계산
+  const centerLat = (minLat + maxLat) / 2
+  const centerLng = (minLng + maxLng) / 2
+
+  // 영역의 크기에 따른 줌 레벨 계산
+  const latDiff = maxLat - minLat
+  const lngDiff = maxLng - minLng
+  const maxDiff = Math.max(latDiff, lngDiff)
+
+  let level = 10 // 기본 줌 레벨
+
+  if (maxDiff > 5) level = 12      // 매우 넓은 영역
+  else if (maxDiff > 2) level = 11  // 넓은 영역
+  else if (maxDiff > 1) level = 10  // 중간 영역
+  else if (maxDiff > 0.5) level = 9 // 작은 영역
+  else if (maxDiff > 0.2) level = 8 // 매우 작은 영역
+  else level = 7                    // 아주 작은 영역
+
+  console.log('🗺️ 지도 경계 계산:', {
+    areas: areas.length,
+    bounds: { minLat, maxLat, minLng, maxLng },
+    center: { centerLat, centerLng },
+    maxDiff,
+    level
+  })
+
+  return { centerLat, centerLng, level }
+}
+
 // AreasPage에서 사용하는 확장된 ProcessedArea 타입
 interface ExtendedProcessedArea extends ProcessedArea {
   partnersInArea?: Partner[]
@@ -730,21 +792,24 @@ const AreasPage = () => {
             overflow: 'hidden'
           } 
         },
-        React.createElement(KakaoMap, {
-          width: '100%',
-          height: '600px',
-          latitude: 37.5665,
-          longitude: 126.9780,
-          level: 10,
-          areas: mapAreas,
-          showAreaBounds: true,
-          onAreaClick: (area: any) => {
-            const selectedArea = areas.find(a => a.id === area.id)
-            if (selectedArea) {
-              handleAreaDetail(selectedArea)
+        (() => {
+          const mapBounds = calculateMapBounds(filteredAreas)
+          return React.createElement(KakaoMap, {
+            width: '100%',
+            height: '600px',
+            latitude: mapBounds.centerLat,
+            longitude: mapBounds.centerLng,
+            level: mapBounds.level,
+            areas: filteredAreas,
+            showAreaBounds: true,
+            onAreaClick: (area: any) => {
+              const selectedArea = filteredAreas.find(a => a.id === area.id)
+              if (selectedArea) {
+                handleAreaDetail(selectedArea)
+              }
             }
-          }
-        })
+          })
+        })()
       ) :
       // 영역 목록 (카드 형태)
       React.createElement('div',
