@@ -92,7 +92,6 @@ const AreasPage = () => {
   const [partnersLoading, setPartnersLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
   const [mapLoading, setMapLoading] = useState(false)
-  const [processedModalData, setProcessedModalData] = useState<any>(null)
   
   // useFilters 훅 사용 (홈화면과 동일)
   const { options, filters, updateFilter, resetFilters } = useFilters()
@@ -392,110 +391,31 @@ const AreasPage = () => {
     (area.description && area.description.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
-  // 상권 상세보기 (데이터 전처리 최적화)
-  const handleAreaDetail = (area: Area) => {
-    console.log('🔍 Area detail clicked:', area)
-    console.log('🔍 area.partnersInArea:', area.partnersInArea)
-    console.log('🔍 area.coordinates:', area.coordinates)
+  // 매니저 기반 색상 함수 (홈화면과 동일)
+  const getManagerColor = (managerEmployeeId?: string): string => {
+    if (!managerEmployeeId) return '#667eea'
     
-    setMapLoading(true)
+    // 기본 해시 기반 색상 생성
+    let hash = 0
+    for (let i = 0; i < managerEmployeeId.length; i++) {
+      hash = managerEmployeeId.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    
+    // 더 다양하고 구분되는 색상 팔레트
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3',
+      '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43', '#A55EEA', '#26DE81',
+      '#FD79A8', '#FDCB6E', '#6C5CE7', '#74B9FF'
+    ]
+    return colors[Math.abs(hash) % colors.length]
+  }
+
+  // 상권 상세보기 (홈화면과 동일한 방식)
+  const handleAreaDetail = (area: Area) => {
     setSelectedArea(area)
     setModalType('detail')
     setShowModal(true)
-    
-    // 비동기로 지도 데이터 전처리
-    setTimeout(() => {
-      if (area.partnersInArea && area.partnersInArea.length > 0) {
-        // 담당자별 색상 매핑 미리 계산
-        const uniqueManagers = [...new Set(area.partnersInArea.map(p => p.currentManagerName))].filter(Boolean)
-        const managerColorMap = new Map()
-        uniqueManagers.forEach((manager, index) => {
-          managerColorMap.set(manager, generateManagerColor(index))
-        })
-        
-        // 마커 데이터 미리 생성 (최대 50개로 제한하여 성능 향상)
-        const limitedPartners = area.partnersInArea.slice(0, 50)
-        console.log('🔍 Creating markers for partners:', limitedPartners.length)
-        
-        const markers = limitedPartners.map(partner => {
-          const lat = Number(partner.latitude)
-          const lng = Number(partner.longitude)
-          
-          // 좌표 유효성 검사
-          if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
-            console.warn('🔍 Invalid coordinates for partner:', partner.partnerCode, lat, lng)
-            return null
-          }
-          
-          return {
-            id: partner.partnerCode,
-            latitude: lat,
-            longitude: lng,
-            title: partner.partnerName,
-            rtmChannel: partner.channel || 'default', // 기본값 설정
-            markerColor: partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#999999' : '#cccccc',
-          content: `
-            <div style="padding: 10px; min-width: 220px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-radius: 8px;">
-              <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">${partner.partnerName}</h4>
-              <div style="font-size: 12px; color: #666; margin-bottom: 4px;"><strong>코드:</strong> ${partner.partnerCode}</div>
-              <div style="font-size: 12px; color: #666; margin-bottom: 4px;"><strong>채널:</strong> ${partner.channel || '기타'}</div>
-              <div style="font-size: 12px; margin-bottom: 4px;">
-                <strong>담당자:</strong> 
-                <span style="color: ${partner.currentManagerName ? managerColorMap.get(partner.currentManagerName) || '#999999' : '#cccccc'}; font-weight: bold;">
-                  ${partner.currentManagerName || '미지정'}
-                </span>
-              </div>
-              ${partner.businessAddress ? `<div style="font-size: 11px; color: #999; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">${partner.businessAddress}</div>` : ''}
-            </div>
-          `
-          }
-        }).filter(marker => marker !== null) // null 제거
-        
-        console.log('🔍 Valid markers created:', markers.length)
-        
-        // 영역 좌표 정규화
-        const normalizedCoordinates = normalizeCoordinates(area.coordinates)
-        
-        setProcessedModalData({
-          area: {
-            id: area.id,
-            name: area.name,
-            coordinates: normalizedCoordinates,
-            color: (area as any).color || '#667eea',
-            strokeColor: (area as any).strokeColor || '#667eea',
-            strokeWeight: (area as any).strokeWeight || 2,
-            opacity: (area as any).fillOpacity || 0.3
-          },
-          markers,
-          managerColorMap,
-          uniqueManagers,
-          totalPartners: area.partnersInArea.length,
-          showingPartners: limitedPartners.length
-        })
-      } else {
-        console.log('🔍 No partners in area, creating area-only data')
-        const normalizedCoords = normalizeCoordinates(area.coordinates)
-        console.log('🔍 Normalized coordinates:', normalizedCoords)
-        
-        setProcessedModalData({
-          area: {
-            id: area.id,
-            name: area.name,
-            coordinates: normalizedCoords,
-            color: (area as any).color || '#667eea',
-            strokeColor: (area as any).strokeColor || '#667eea',
-            strokeWeight: (area as any).strokeWeight || 2,
-            opacity: (area as any).fillOpacity || 0.3
-          },
-          markers: [],
-          managerColorMap: new Map(),
-          uniqueManagers: [],
-          totalPartners: 0,
-          showingPartners: 0
-        })
-      }
-      setMapLoading(false)
-    }, 10)
+    setMapLoading(false)
   }
 
   // 상권 편집
@@ -516,7 +436,6 @@ const AreasPage = () => {
   const closeModal = () => {
     setShowModal(false)
     setSelectedArea(null)
-    setProcessedModalData(null)
     setMapLoading(false)
   }
 
@@ -1101,60 +1020,97 @@ const AreasPage = () => {
           React.createElement('div',
             { style: { display: 'flex', flexDirection: 'column', gap: '20px' } },
             
-            // 지도 영역 (로딩 상태 표시)
+            // 지도 영역 (홈화면과 동일한 방식)
             React.createElement('div',
               { style: { width: '100%', height: '300px', borderRadius: '8px', overflow: 'hidden', position: 'relative' } },
-              mapLoading ? 
-                React.createElement('div', {
-                  style: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    backgroundColor: '#f5f5f5',
-                    color: '#666',
-                    fontSize: '14px'
-                  }
-                }, '지도 로딩 중...') :
-                processedModalData ? React.createElement(KakaoMap, {
-                  width: '100%',
-                  height: '300px',
-                  staticMode: true,
-                  disableControls: true,
-                  showAreaBounds: true,
-                  fitBounds: true,
-                  disableMarkerCentering: true,
-                  areas: processedModalData.area ? [processedModalData.area] : [],
-                  markers: processedModalData.markers || [],
-                  latitude: (() => {
-                    const coords = processedModalData.area?.coordinates
-                    if (!coords || coords.length === 0) return 37.5665
-                    return coords.reduce((sum: number, coord: number[]) => sum + coord[1], 0) / coords.length
-                  })(),
-                  longitude: (() => {
-                    const coords = processedModalData.area?.coordinates
-                    if (!coords || coords.length === 0) return 126.9780
-                    return coords.reduce((sum: number, coord: number[]) => sum + coord[0], 0) / coords.length
-                  })(),
-                  level: 8
-                }) : null
+              selectedArea ? React.createElement(KakaoMap, {
+                width: '100%',
+                height: '300px',
+                staticMode: true,
+                disableControls: true,
+                showAreaBounds: true,
+                fitBounds: true,
+                disableMarkerCentering: true,
+                areas: [{
+                  id: selectedArea.id,
+                  name: selectedArea.name,
+                  coordinates: normalizeCoordinates(selectedArea.coordinates),
+                  color: selectedArea.color || '#667eea',
+                  strokeColor: selectedArea.strokeColor || '#667eea',
+                  strokeWeight: selectedArea.strokeWeight || 2,
+                  opacity: selectedArea.fillOpacity || 0.3,
+                  data: { salesTerritory: selectedArea.salesTerritory, properties: selectedArea.properties }
+                }],
+                markers: selectedArea.partnersInArea ?
+                  selectedArea.partnersInArea
+                    .filter(partner => {
+                      const lat = Number(partner.latitude)
+                      const lng = Number(partner.longitude)
+                      return lat && lng && !isNaN(lat) && !isNaN(lng) &&
+                             lat >= 33 && lat <= 43 && lng >= 124 && lng <= 132
+                    })
+                    .map((partner, index) => {
+                      const managerColor = getManagerColor(partner.currentManagerEmployeeId)
+                      const lat = Number(partner.latitude)
+                      const lng = Number(partner.longitude)
+                      
+                      return {
+                        id: partner.partnerCode,
+                        latitude: lat,
+                        longitude: lng,
+                        title: partner.partnerName,
+                        markerColor: managerColor,
+                        rtmChannel: partner.channel || '업소',
+                        content: `
+                          <div style="min-width: 320px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; margin: -15px -15px 15px -15px; border-radius: 8px 8px 0 0;">
+                              <h3 style="margin: 0; font-size: 18px; font-weight: 600;">${partner.partnerName}</h3>
+                              <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">코드: ${partner.partnerCode}</div>
+                            </div>
+                            <div style="padding: 0 5px;">
+                              <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                  <span style="background: #f1f3f4; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #5f6368;">채널</span>
+                                  <span style="font-weight: 500; color: #333;">${partner.channel || '기타'}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                  <span style="background: #e8f5e8; padding: 4px 8px; border-radius: 12px; font-size: 12px; color: #137333;">담당자</span>
+                                  <span style="font-weight: 500; color: #333;">${partner.currentManagerName || '미지정'}</span>
+                                </div>
+                                ${partner.businessAddress ? `
+                                  <div style="margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #667eea;">
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 2px;">사업장 주소</div>
+                                    <div style="font-size: 13px; color: #333; line-height: 1.4;">${partner.businessAddress}</div>
+                                  </div>
+                                ` : ''}
+                              </div>
+                            </div>
+                          </div>
+                        `
+                      }
+                    }) : [],
+                level: 8
+              }) : null
             ),
             
             // 담당자별 색상 범례 (거래처가 있을 때만 표시)
-            processedModalData && processedModalData.totalPartners > 0 && React.createElement('div',
-              { style: { padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' } },
-              React.createElement('h4', { style: { margin: '0 0 10px 0', fontSize: '14px', color: '#333' } }, 
-                `담당자별 마커 색상 ${processedModalData.showingPartners < processedModalData.totalPartners ? 
-                  `(${processedModalData.showingPartners}/${processedModalData.totalPartners}개 표시)` : 
-                  `(${processedModalData.totalPartners}개)`}`
-              ),
-              React.createElement('div', 
-                { style: { display: 'flex', flexWrap: 'wrap', gap: '10px' } },
-                processedModalData.uniqueManagers.map((managerName: string) => {
-                    const partnerCount = selectedArea?.partnersInArea?.filter(p => p.currentManagerName === managerName).length || 0
+            selectedArea && selectedArea.partnersInArea && selectedArea.partnersInArea.length > 0 && (() => {
+              const uniqueManagers = [...new Set(selectedArea.partnersInArea!.map(p => p.currentManagerEmployeeId))].filter(Boolean)
+              return React.createElement('div',
+                { style: { padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' } },
+                React.createElement('h4', { style: { margin: '0 0 10px 0', fontSize: '14px', color: '#333' } }, 
+                  `담당자별 마커 색상 (${selectedArea.partnersInArea!.length}개 거래처)`
+                ),
+                React.createElement('div', 
+                  { style: { display: 'flex', flexWrap: 'wrap', gap: '10px' } },
+                  uniqueManagers.map(employeeId => {
+                    const manager = selectedArea.partnersInArea!.find(p => p.currentManagerEmployeeId === employeeId)
+                    const partnerCount = selectedArea.partnersInArea!.filter(p => p.currentManagerEmployeeId === employeeId).length
+                    const color = getManagerColor(employeeId)
+                    
                     return React.createElement('div', 
                       { 
-                        key: managerName,
+                        key: employeeId,
                         style: { 
                           display: 'flex', 
                           alignItems: 'center', 
@@ -1171,12 +1127,12 @@ const AreasPage = () => {
                           width: '16px',
                           height: '16px',
                           borderRadius: '50%',
-                          backgroundColor: processedModalData.managerColorMap.get(managerName) || '#999999',
+                          backgroundColor: color,
                           border: '2px solid white',
                           boxShadow: '0 0 0 1px #ddd'
                         }
                       }),
-                      React.createElement('span', { style: { fontWeight: '500' } }, managerName),
+                      React.createElement('span', { style: { fontWeight: '500' } }, manager?.currentManagerName || '미지정'),
                       React.createElement('span', { 
                         style: { 
                           fontSize: '11px', 
@@ -1187,9 +1143,10 @@ const AreasPage = () => {
                         } 
                       }, `${partnerCount}개`)
                     )
-                  }) || []
+                  })
+                )
               )
-            ),
+            })(),
 
             // 상세 정보
             React.createElement('div',
