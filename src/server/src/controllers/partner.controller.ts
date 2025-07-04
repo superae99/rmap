@@ -36,17 +36,8 @@ export const getPartners = async (req: Request & { user?: any }, res: Response) 
       const userAccount = req.user.account || ''
       const userFieldType = req.user.fieldType || ''
 
-      // 디버깅: 파트너 조회 권한 체크
       const isAdminStaff = userAccount === 'admin' || userJobTitle.includes('시스템관리자') || 
                           userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭'
-      console.log('🔍 getPartners - 권한 체크:', {
-        account: userAccount,
-        position: userPosition,
-        jobTitle: userJobTitle,
-        fieldType: userFieldType,
-        isAdminStaff,
-        filters: { branchFilter, officeFilter, managerFilter }
-      })
 
       // admin/staff 계정: 모든 필터 사용 가능
       if (isAdminStaff) {
@@ -454,15 +445,6 @@ export const getFilterOptions = async (req: Request & { user?: any }, res: Respo
     const userAccount = req.user.account || ''
     const userFieldType = req.user.fieldType || ''
     
-    // 디버깅: 사용자 권한 정보 로그
-    console.log('🔍 getFilterOptions - 사용자 권한 체크:', {
-      account: userAccount,
-      position: userPosition,
-      jobTitle: userJobTitle,
-      fieldType: userFieldType,
-      isAdmin: userAccount === 'admin' || userJobTitle.includes('시스템관리자'),
-      isStaff: userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭'
-    })
     
     const userRepository = AppDataSource.getRepository(User)
 
@@ -569,11 +551,6 @@ export const getFilterOptions = async (req: Request & { user?: any }, res: Respo
       officeName: m.officeName
     }))
 
-    console.log(`🎯 실제 거래처 데이터가 있는 필터 옵션 조회 완료:`, {
-      branches: branches.length,
-      offices: offices.length,
-      managers: managersData.length
-    })
 
     res.json({
       branches,

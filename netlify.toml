@@ -1,9 +1,12 @@
 [build]
   # 빌드 명령어 (클라이언트 디렉토리에서 실행)
-  command = "cd src/client && npm ci && npm run build"
+  command = "npm ci && npm run build"
   
   # 빌드 결과물이 있는 디렉토리 (클라이언트의 dist 폴더)
-  publish = "src/client/dist"
+  publish = "dist"
+  
+  # 빌드 기본 디렉토리 설정
+  base = "src/client"
   
   # Node.js 버전 지정
   environment = { NODE_VERSION = "18" }

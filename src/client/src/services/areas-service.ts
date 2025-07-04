@@ -52,9 +52,6 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     // with-territory 엔드포인트는 배열을 직접 반환
     const areasData = Array.isArray(responseData) ? responseData : responseData.areas || responseData
     
-    // 디버깅: 서버에서 받은 원본 데이터 확인
-    if (areasData.length > 0) {
-    }
     
     // 카카오맵에 사용할 형태로 변환
     const processedAreas: ProcessedArea[] = areasData
@@ -82,7 +79,6 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
             }
           }
         } catch (error) {
-          console.warn(`좌표 파싱 실패 for area ${area.id}:`, error)
           return null
         }
         
@@ -124,13 +120,9 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
       .filter(Boolean) // null 값 제거
     
     
-    // 첫 번째 영역의 좌표 샘플 로그
-    if (processedAreas.length > 0) {
-    }
     
     return processedAreas
   } catch (error) {
-    console.error('❌ Areas 데이터 로드 실패:', error)
     return []
   }
 }
