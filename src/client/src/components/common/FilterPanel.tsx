@@ -33,7 +33,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   // 권한 체크
   const isAdmin = user?.account === 'admin' || user?.jobTitle?.includes('시스템관리자')
-  const isStaff = user?.position?.includes('스탭') || user?.jobTitle?.includes('스탭')
+  const isStaff = user?.position?.includes('스탭') || user?.jobTitle?.includes('스탭') || user?.fieldType === '스탭'
   const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
   
   // Staff와 Admin은 모든 필터를 볼 수 있음 (지점장 여부와 상관없이)
@@ -46,6 +46,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         user: user.employeeName,
         position: user.position,
         jobTitle: user.jobTitle,
+        fieldType: user.fieldType,
         account: user.account,
         isAdmin,
         isStaff,

@@ -7,11 +7,11 @@ plugins = []
 [functions."*"]
 
 [build]
-publish = "/Users/rae/projects/New_Map_Project/src/client/src/client/dist"
+publish = "/Users/rae/projects/New_Map_Project/src/client/dist"
 publishOrigin = "config"
 commandOrigin = "config"
 base = "/Users/rae/projects/New_Map_Project/src/client"
-command = "cd src/client && npm ci && npm run build"
+command = "npm ci && npm run build"
 
 [build.environment]
 NODE_VERSION = "18"
