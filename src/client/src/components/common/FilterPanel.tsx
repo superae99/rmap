@@ -32,10 +32,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const hasAnyFilter = Object.values(filters).some(value => value && value !== '')
 
   // 권한 체크
-  const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
-  const isStaff = user?.position?.includes('스탭') || user?.jobTitle?.includes('스탭')
   const isAdmin = user?.account === 'admin' || user?.jobTitle?.includes('시스템관리자')
-  const isStaffOrAdmin = isStaff || isAdmin
+  const isStaff = user?.position?.includes('스탭') || user?.jobTitle?.includes('스탭')
+  const isBranchManager = user?.position?.includes('지점장') || user?.jobTitle?.includes('지점장')
+  
+  // Staff와 Admin은 모든 필터를 볼 수 있음 (지점장 여부와 상관없이)
+  const shouldShowAllFilters = isAdmin || isStaff
 
   // 디버깅: 권한 정보 출력 (개발 환경에서만)
   React.useEffect(() => {
@@ -45,14 +47,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         position: user.position,
         jobTitle: user.jobTitle,
         account: user.account,
-        isBranchManager,
-        isStaff,
         isAdmin,
-        isStaffOrAdmin,
-        shouldShowAllFilters: !isBranchManager || isStaffOrAdmin
+        isStaff,
+        isBranchManager,
+        shouldShowAllFilters
       })
     }
-  }, [user, isBranchManager, isStaff, isAdmin, isStaffOrAdmin])
+  }, [user, isAdmin, isStaff, isBranchManager, shouldShowAllFilters])
 
   // 선택된 지사에 따른 지점 필터링
   const filteredOffices = filters.branchFilter 
@@ -91,8 +92,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       </div>
 
       <div className="filter-controls">
-        {/* 지사 필터 - 지점장에게는 숨김, staff/admin은 모두 볼 수 있음 */}
-        {(!isBranchManager || isStaffOrAdmin) && options.branches.length > 0 && (
+        {/* 지사 필터 - Staff/Admin은 모든 필터 표시, 일반 지점장은 숨김 */}
+        {(shouldShowAllFilters || !isBranchManager) && options.branches.length > 0 && (
           <div className="filter-group">
             <label>지사</label>
             <select
@@ -109,8 +110,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           </div>
         )}
 
-        {/* 지점 필터 - 지점장에게는 숨김, staff/admin은 모두 볼 수 있음 */}
-        {(!isBranchManager || isStaffOrAdmin) && options.offices.length > 0 && (
+        {/* 지점 필터 - Staff/Admin은 모든 필터 표시, 일반 지점장은 숨김 */}
+        {(shouldShowAllFilters || !isBranchManager) && options.offices.length > 0 && (
           <div className="filter-group">
             <label>지점</label>
             <select
