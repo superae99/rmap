@@ -441,6 +441,17 @@ export const getFilterOptions = async (req: Request & { user?: any }, res: Respo
     const userJobTitle = req.user.jobTitle || ''
     const userAccount = req.user.account || ''
     const userFieldType = req.user.fieldType || ''
+    
+    // 디버깅: 사용자 권한 정보 로그
+    console.log('🔍 getFilterOptions - 사용자 권한 체크:', {
+      account: userAccount,
+      position: userPosition,
+      jobTitle: userJobTitle,
+      fieldType: userFieldType,
+      isAdmin: userAccount === 'admin' || userJobTitle.includes('시스템관리자'),
+      isStaff: userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭'
+    })
+    
     const userRepository = AppDataSource.getRepository(User)
 
     let branches: string[] = []
