@@ -55,12 +55,15 @@ export const login = async (req: Request, res: Response) => {
     const { password: _, ...userWithoutPassword } = user
 
     // JWT 토큰을 httpOnly 쿠키로 설정
-    res.cookie('authToken', token, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // HTTPS에서만
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-origin 허용
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
-    })
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const, // Cross-origin 허용
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+      path: '/' // 명시적 경로 설정
+    }
+    
+    res.cookie('authToken', token, cookieOptions)
 
     res.json({
       message: '로그인에 성공했습니다.',
@@ -97,7 +100,8 @@ export const logout = async (_req: Request, res: Response) => {
   res.clearCookie('authToken', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+    path: '/'
   })
   res.json({ message: '로그아웃되었습니다.' })
 }
