@@ -20,8 +20,8 @@ async function apiRequest(
   
   if (!response.ok) {
     if (response.status === 401) {
-      // 인증 실패 시 로그인 페이지로 리다이렉트
-      window.location.href = '/login'
+      // 인증 실패 시 커스텀 이벤트 발생 (URL 변경 없이 처리)
+      window.dispatchEvent(new CustomEvent('auth-required'))
     }
     throw new Error(`API Error: ${response.statusText}`)
   }

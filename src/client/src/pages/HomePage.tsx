@@ -54,6 +54,7 @@ const HomePage = () => {
   const [showAllManagers, setShowAllManagers] = useState(false)
   const [customManagerColors, setCustomManagerColors] = useState<{[key: string]: string}>({})
   const [user, setUser] = useState<any>(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   // RTM 채널 필터 상태 (기본적으로 모든 채널 표시)
   const [rtmChannelFilters, setRtmChannelFilters] = useState({
@@ -65,6 +66,16 @@ const HomePage = () => {
 
   // 새로운 필터링 시스템 사용
   const { options, filters, updateFilter, resetFilters, loadFilterOptions } = useFilters()
+
+  // 인증 필요 이벤트 리스너
+  useEffect(() => {
+    const handleAuthRequired = () => {
+      setShowLoginModal(true)
+    }
+
+    window.addEventListener('auth-required', handleAuthRequired)
+    return () => window.removeEventListener('auth-required', handleAuthRequired)
+  }, [])
 
   // 사용자 정보 로드
   useEffect(() => {
@@ -78,6 +89,8 @@ const HomePage = () => {
         
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error)
+        // 에러 발생 시 로그인 모달 표시
+        setShowLoginModal(true)
       }
     }
 
@@ -1253,6 +1266,100 @@ const HomePage = () => {
               }
             },
             '변경'
+          )
+        )
+      )
+    ),
+
+    // 로그인 모달
+    showLoginModal && React.createElement('div',
+      {
+        style: {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }
+      },
+      React.createElement('div',
+        {
+          style: {
+            backgroundColor: 'white',
+            padding: '40px',
+            borderRadius: '12px',
+            width: '400px',
+            maxWidth: '90vw',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+          }
+        },
+        React.createElement('h2',
+          {
+            style: {
+              margin: '0 0 20px 0',
+              textAlign: 'center',
+              color: '#333',
+              fontSize: '24px'
+            }
+          },
+          '로그인이 필요합니다'
+        ),
+        React.createElement('p',
+          {
+            style: {
+              margin: '0 0 30px 0',
+              textAlign: 'center',
+              color: '#666',
+              fontSize: '16px'
+            }
+          },
+          '계속하려면 로그인해주세요.'
+        ),
+        React.createElement('div',
+          {
+            style: {
+              display: 'flex',
+              gap: '10px',
+              justifyContent: 'center'
+            }
+          },
+          React.createElement('button',
+            {
+              onClick: () => {
+                window.location.href = '/login'
+              },
+              style: {
+                padding: '12px 24px',
+                backgroundColor: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '600'
+              }
+            },
+            '로그인하기'
+          ),
+          React.createElement('button',
+            {
+              onClick: () => setShowLoginModal(false),
+              style: {
+                padding: '12px 24px',
+                backgroundColor: '#f7fafc',
+                color: '#4a5568',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px'
+              }
+            },
+            '취소'
           )
         )
       )
