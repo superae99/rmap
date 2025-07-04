@@ -70,11 +70,6 @@ const HomePage = () => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          return
-        }
-
         const userData = await authAPI.getProfile()
         setUser(userData)
         
@@ -230,7 +225,7 @@ const HomePage = () => {
       setPartners(partnersData.partners || partnersData)
       
       // 영역 데이터 로드
-      const areasData = await loadAreasData(filters, localStorage.getItem('token') || undefined)
+      const areasData = await loadAreasData(filters)
       setAreas(areasData)
 
 

@@ -54,12 +54,9 @@ export const useFilters = () => {
     }))
   }
 
-  // 로그인 시 필터 옵션 자동 로드
+  // 컴포넌트 마운트 시 필터 옵션 자동 로드
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      loadFilterOptions()
-    }
+    loadFilterOptions()
   }, [])
 
   return {

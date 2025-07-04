@@ -54,9 +54,17 @@ export const login = async (req: Request, res: Response) => {
     // 비밀번호 제외하고 응답
     const { password: _, ...userWithoutPassword } = user
 
+    // JWT 토큰을 httpOnly 쿠키로 설정
+    res.cookie('authToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // HTTPS에서만
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+    })
+
     res.json({
       message: '로그인에 성공했습니다.',
-      token,
+      token, // 기존 클라이언트 호환성을 위해 유지 (나중에 제거)
       user: userWithoutPassword
     })
   } catch (error) {
@@ -83,8 +91,9 @@ export const getProfile = async (req: Request & { user?: any }, res: Response) =
   }
 }
 
-// 로그아웃은 클라이언트에서 토큰을 삭제하면 되므로 별도 구현 불필요
+// 로그아웃 시 쿠키 삭제
 export const logout = async (req: Request, res: Response) => {
+  res.clearCookie('authToken')
   res.json({ message: '로그아웃되었습니다.' })
 }
 

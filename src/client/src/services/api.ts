@@ -7,25 +7,20 @@ async function apiRequest(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> {
-  const token = localStorage.getItem('token')
-  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
   
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-  
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include', // 쿠키를 포함하여 요청
   })
   
   if (!response.ok) {
     if (response.status === 401) {
-      localStorage.removeItem('token')
+      // 인증 실패 시 로그인 페이지로 리다이렉트
       window.location.href = '/login'
     }
     throw new Error(`API Error: ${response.statusText}`)
@@ -42,10 +37,7 @@ export const authAPI = {
       body: JSON.stringify({ account, password }),
     })
     
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-    }
-    
+    // 쿠키는 서버에서 자동으로 설정되므로 localStorage 사용 안함
     return data
   },
   
@@ -55,7 +47,7 @@ export const authAPI = {
   
   logout: async () => {
     await apiRequest('/auth/logout', { method: 'POST' })
-    localStorage.removeItem('token')
+    // 쿠키는 서버에서 자동으로 삭제되므로 localStorage 사용 안함
     window.location.href = '/login'
   },
   

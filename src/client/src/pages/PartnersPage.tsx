@@ -27,11 +27,6 @@ const PartnersPage = () => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          return
-        }
-
         const userData = await authAPI.getProfile()
         setUser(userData)
         

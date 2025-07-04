@@ -38,21 +38,15 @@ function App() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // 토큰 확인
-      const token = localStorage.getItem('token');
-      
-      if (token) {
+      // 쿠키 기반 인증 확인 - 서버에서 사용자 정보 가져오기 시도
+      try {
+        const userData = await authAPI.getProfile();
+        setUser(userData);
         setIsAuthenticated(true);
-        // 사용자 정보 가져오기
-        try {
-          const userData = await authAPI.getProfile();
-          setUser(userData);
-        } catch (error) {
-          console.error('사용자 정보 로드 실패:', error);
-          // 토큰이 유효하지 않으면 로그아웃 처리
-          localStorage.removeItem('token');
-          setIsAuthenticated(false);
-        }
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+        // 쿠키가 유효하지 않거나 없으면 인증되지 않은 상태로 설정
+        setIsAuthenticated(false);
       }
       
       setLoading(false);
@@ -73,8 +67,13 @@ function App() {
   };
 
   // 로그아웃 함수
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('로그아웃 요청 실패:', error);
+    }
+    // 쿠키는 서버에서 삭제되므로 상태만 초기화
     setIsAuthenticated(false);
     setUser(null);
     setCurrentPage('home');

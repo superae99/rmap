@@ -22,13 +22,13 @@ export interface ProcessedArea {
   } | null
 }
 
-// 데이터베이스에서 영역 데이터 로드 (로그인 사용자만 필터 적용)
-export const loadAreasData = async (filters?: any, token?: string): Promise<ProcessedArea[]> => {
+// 데이터베이스에서 영역 데이터 로드 (인증된 사용자만 접근 가능)
+export const loadAreasData = async (filters?: any): Promise<ProcessedArea[]> => {
   try {
     
-    // 필터 매개변수를 URL에 추가 (토큰이 있을 때만)
+    // 필터 매개변수를 URL에 추가
     const queryParams = new URLSearchParams()
-    if (filters && token) {
+    if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== '') {
           queryParams.append(key, value as string)
@@ -43,13 +43,9 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     // sales_territories와 조인된 데이터를 위해 with-sales-territory 엔드포인트 사용
     const url = `${baseUrl}/areas/with-sales-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     
-    // 헤더에 인증 토큰 추가 (있는 경우)
-    const headers: HeadersInit = {}
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-    
-    const response = await fetch(url, { headers })
+    const response = await fetch(url, { 
+      credentials: 'include' // 쿠키를 포함하여 요청
+    })
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)

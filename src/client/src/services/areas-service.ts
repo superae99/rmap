@@ -39,13 +39,9 @@ export const loadAreasData = async (filters?: any, token?: string): Promise<Proc
     // sales_territories와 조인된 데이터를 위해 with-sales-territory 엔드포인트 사용
     const url = `${baseUrl}/areas/with-sales-territory${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     
-    // 헤더에 인증 토큰 추가 (있는 경우)
-    const headers: HeadersInit = {}
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-    
-    const response = await fetch(url, { headers })
+    const response = await fetch(url, { 
+      credentials: 'include' // 쿠키를 포함하여 요청
+    })
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)

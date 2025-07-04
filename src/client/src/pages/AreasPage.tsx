@@ -213,11 +213,6 @@ const AreasPage = () => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          return
-        }
-
         const userData = await authAPI.getProfile()
         setUser(userData)
         
@@ -250,7 +245,7 @@ const AreasPage = () => {
           officeFilter: filters.officeFilter,
           managerFilter: filters.managerFilter
         }),
-        loadAreasData(filters, localStorage.getItem('token') || undefined)
+        loadAreasData(filters)
       ])
       
       // 거래처 데이터 처리
