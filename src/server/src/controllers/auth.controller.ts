@@ -61,8 +61,15 @@ export const login = async (req: Request, res: Response) => {
       sameSite: 'none' as const, // cross-origin 쿠키 전송을 위해 'none' 필요
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
       path: '/', // 명시적 경로 설정
-      domain: process.env.NODE_ENV === 'production' ? '.platformsh.site' : undefined // production에서 도메인 공유
+      // domain 설정 제거 - cross-origin에서 문제 발생할 수 있음
     }
+    
+    // 디버깅: 쿠키 설정 로그
+    console.log('🍪 쿠키 설정:', {
+      cookieOptions,
+      nodeEnv: process.env.NODE_ENV,
+      requestOrigin: req.headers.origin
+    })
     
     // 디버깅: 토큰에 포함된 사용자 정보 로그
     console.log('🔑 JWT 토큰 생성 - 사용자 정보:', {
@@ -73,6 +80,9 @@ export const login = async (req: Request, res: Response) => {
     })
     
     res.cookie('authToken', token, cookieOptions)
+    
+    // 쿠키 설정 후 디버깅
+    console.log('🍪 쿠키 설정 완료 - authToken 쿠키가 응답에 포함되어야 함')
 
     res.json({
       message: '로그인에 성공했습니다.',
@@ -111,7 +121,7 @@ export const logout = async (_req: Request, res: Response) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none' as const, // cross-origin 지원
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? '.platformsh.site' : undefined
+    // domain 설정 제거 - cross-origin에서 문제 발생할 수 있음
   }
   
   // 기본 clearCookie
