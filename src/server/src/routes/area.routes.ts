@@ -12,10 +12,10 @@ import {
 
 const router = Router()
 
-// 모든 영역 조회에 인증 필요
-router.get('/', authenticate, getAreas)
-router.get('/with-sales-territory', authenticate, getAreasWithSalesTerritory)
-router.get('/:id', authenticate, getArea)
+// 모든 영역 조회에 인증 + 권한 필요
+router.get('/', authenticate, authorize('admin', 'staff', 'manager', 'user'), getAreas)
+router.get('/with-sales-territory', authenticate, authorize('admin', 'staff', 'manager', 'user'), getAreasWithSalesTerritory)
+router.get('/:id', authenticate, authorize('admin', 'staff', 'manager', 'user'), getArea)
 
 // 영역 수정/삭제는 인증 필요
 router.post('/', authenticate, authorize('manager', 'admin'), createArea)
