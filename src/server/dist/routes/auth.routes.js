@@ -2,13 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const auth_middleware_1 = require("../middlewares/auth.middleware");
+const rate_limit_middleware_1 = require("../middlewares/rate-limit.middleware");
 const auth_controller_1 = require("../controllers/auth.controller");
 const router = (0, express_1.Router)();
-// 인증이 필요 없는 라우트
-router.post('/login', auth_controller_1.login);
+// 인증이 필요 없는 라우트 (율제한 적용)
+router.post('/login', rate_limit_middleware_1.authRateLimit, auth_controller_1.login);
 // 인증이 필요한 라우트
 router.get('/me', auth_middleware_1.authenticate, auth_controller_1.getProfile);
 router.post('/logout', auth_middleware_1.authenticate, auth_controller_1.logout);
-router.post('/change-password', auth_middleware_1.authenticate, auth_controller_1.changePassword);
+router.post('/change-password', auth_middleware_1.authenticate, rate_limit_middleware_1.passwordChangeRateLimit, auth_controller_1.changePassword);
 exports.default = router;
 //# sourceMappingURL=auth.routes.js.map

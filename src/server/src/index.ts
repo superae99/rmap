@@ -11,6 +11,7 @@ import salesTerritoryRoutes from './routes/sales-territory.routes'
 import kakaoRoutes from './routes/kakao.routes'
 import adminRoutes from './routes/admin.routes'
 import { errorHandler } from './middlewares/error.middleware'
+import { generalRateLimit } from './middlewares/rate-limit.middleware'
 
 dotenv.config()
 
@@ -51,6 +52,9 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
+// 전체 애플리케이션에 일반 율제한 적용
+app.use(generalRateLimit)
 
 // Routes
 app.use('/api/auth', authRoutes)

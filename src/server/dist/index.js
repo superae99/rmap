@@ -16,6 +16,7 @@ const sales_territory_routes_1 = __importDefault(require("./routes/sales-territo
 const kakao_routes_1 = __importDefault(require("./routes/kakao.routes"));
 const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
 const error_middleware_1 = require("./middlewares/error.middleware");
+const rate_limit_middleware_1 = require("./middlewares/rate-limit.middleware");
 dotenv_1.default.config();
 // Platform.sh 환경변수 처리
 if (process.env.PLATFORM_VARIABLES) {
@@ -51,6 +52,8 @@ app.use((0, cors_1.default)({
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
+// 전체 애플리케이션에 일반 율제한 적용
+app.use(rate_limit_middleware_1.generalRateLimit);
 // Routes
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/partners', partner_routes_1.default);
