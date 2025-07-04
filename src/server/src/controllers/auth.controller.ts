@@ -54,13 +54,14 @@ export const login = async (req: Request, res: Response) => {
     // 비밀번호 제외하고 응답
     const { password: _, ...userWithoutPassword } = user
 
-    // JWT 토큰을 httpOnly 쿠키로 설정
+    // JWT 토큰을 httpOnly 쿠키로 설정 (cross-origin 지원)
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // HTTPS에서만
-      sameSite: 'lax' as const, // 'none' 대신 'lax' 사용 (더 안정적)
+      sameSite: 'none' as const, // cross-origin 쿠키 전송을 위해 'none' 필요
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
-      path: '/' // 명시적 경로 설정
+      path: '/', // 명시적 경로 설정
+      domain: process.env.NODE_ENV === 'production' ? '.platformsh.site' : undefined // production에서 도메인 공유
     }
     
     // 디버깅: 토큰에 포함된 사용자 정보 로그
@@ -104,12 +105,13 @@ export const getProfile = async (req: Request & { user?: any }, res: Response) =
 
 // 로그아웃 시 쿠키 삭제
 export const logout = async (_req: Request, res: Response) => {
-  // 여러 방법으로 쿠키 삭제 시도
+  // 여러 방법으로 쿠키 삭제 시도 (로그인과 동일한 설정)
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/'
+    sameSite: 'none' as const, // cross-origin 지원
+    path: '/',
+    domain: process.env.NODE_ENV === 'production' ? '.platformsh.site' : undefined
   }
   
   // 기본 clearCookie

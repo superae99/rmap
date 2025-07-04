@@ -8,6 +8,10 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const error_middleware_1 = require("./error.middleware");
 const authenticate = async (req, res, next) => {
     try {
+        // 디버깅: 쿠키와 헤더 확인
+        console.log('🔍 Auth Debug - Cookies:', req.cookies);
+        console.log('🔍 Auth Debug - Headers:', req.headers.cookie);
+        console.log('🔍 Auth Debug - Origin:', req.headers.origin);
         // 토큰을 Authorization 헤더 또는 쿠키에서 가져오기
         let token = req.headers.authorization?.split(' ')[1];
         // Authorization 헤더에 토큰이 없으면 쿠키에서 확인
@@ -15,6 +19,7 @@ const authenticate = async (req, res, next) => {
             token = req.cookies?.authToken;
         }
         if (!token) {
+            console.log('❌ No token found in headers or cookies');
             throw new error_middleware_1.AppError('No token provided', 401);
         }
         if (!process.env.JWT_SECRET) {
@@ -30,7 +35,7 @@ const authenticate = async (req, res, next) => {
 };
 exports.authenticate = authenticate;
 const authorize = (...allowedRoles) => {
-    return (req, res, next) => {
+    return (req, _res, next) => {
         if (!req.user) {
             return next(new error_middleware_1.AppError('Unauthorized', 401));
         }

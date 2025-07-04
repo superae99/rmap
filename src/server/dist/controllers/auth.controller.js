@@ -44,13 +44,23 @@ const login = async (req, res) => {
         await userRepository.save(user);
         // 비밀번호 제외하고 응답
         const { password: _, ...userWithoutPassword } = user;
-        // JWT 토큰을 httpOnly 쿠키로 설정
-        res.cookie('authToken', token, {
+        // JWT 토큰을 httpOnly 쿠키로 설정 (cross-origin 지원)
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // HTTPS에서만
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
+            sameSite: 'none', // cross-origin 쿠키 전송을 위해 'none' 필요
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
+            path: '/', // 명시적 경로 설정
+            domain: process.env.NODE_ENV === 'production' ? '.platformsh.site' : undefined // production에서 도메인 공유
+        };
+        // 디버깅: 토큰에 포함된 사용자 정보 로그
+        console.log('🔑 JWT 토큰 생성 - 사용자 정보:', {
+            employeeId: user.employeeId,
+            account: user.account,
+            position: user.position,
+            jobTitle: user.jobTitle
         });
+        res.cookie('authToken', token, cookieOptions);
         res.json({
             message: '로그인에 성공했습니다.',
             token, // 기존 클라이언트 호환성을 위해 유지 (나중에 제거)
@@ -80,8 +90,24 @@ const getProfile = async (req, res) => {
 };
 exports.getProfile = getProfile;
 // 로그아웃 시 쿠키 삭제
-const logout = async (req, res) => {
-    res.clearCookie('authToken');
+const logout = async (_req, res) => {
+    // 여러 방법으로 쿠키 삭제 시도 (로그인과 동일한 설정)
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none', // cross-origin 지원
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.platformsh.site' : undefined
+    };
+    // 기본 clearCookie
+    res.clearCookie('authToken', cookieOptions);
+    // 만료된 쿠키로 덮어쓰기
+    res.cookie('authToken', '', {
+        ...cookieOptions,
+        maxAge: 0,
+        expires: new Date(0)
+    });
+    console.log('🗑️ 서버에서 쿠키 삭제 완료');
     res.json({ message: '로그아웃되었습니다.' });
 };
 exports.logout = logout;
