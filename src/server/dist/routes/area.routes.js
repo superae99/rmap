@@ -4,10 +4,10 @@ const express_1 = require("express");
 const auth_middleware_1 = require("../middlewares/auth.middleware");
 const area_controller_1 = require("../controllers/area.controller");
 const router = (0, express_1.Router)();
-// 영역 조회는 인증 없이 접근 가능 (하지만 필터는 인증된 사용자만)
-router.get('/', area_controller_1.getAreas);
-router.get('/with-sales-territory', area_controller_1.getAreasWithSalesTerritory);
-router.get('/:id', area_controller_1.getArea);
+// 모든 영역 조회에 인증 필요
+router.get('/', auth_middleware_1.authenticate, area_controller_1.getAreas);
+router.get('/with-sales-territory', auth_middleware_1.authenticate, area_controller_1.getAreasWithSalesTerritory);
+router.get('/:id', auth_middleware_1.authenticate, area_controller_1.getArea);
 // 영역 수정/삭제는 인증 필요
 router.post('/', auth_middleware_1.authenticate, (0, auth_middleware_1.authorize)('manager', 'admin'), area_controller_1.createArea);
 router.put('/:id', auth_middleware_1.authenticate, (0, auth_middleware_1.authorize)('manager', 'admin'), area_controller_1.updateArea);

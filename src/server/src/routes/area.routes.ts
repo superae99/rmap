@@ -12,10 +12,10 @@ import {
 
 const router = Router()
 
-// 영역 조회는 인증 없이 접근 가능 (하지만 필터는 인증된 사용자만)
-router.get('/', getAreas)
-router.get('/with-sales-territory', getAreasWithSalesTerritory)
-router.get('/:id', getArea)
+// 모든 영역 조회에 인증 필요
+router.get('/', authenticate, getAreas)
+router.get('/with-sales-territory', authenticate, getAreasWithSalesTerritory)
+router.get('/:id', authenticate, getArea)
 
 // 영역 수정/삭제는 인증 필요
 router.post('/', authenticate, authorize('manager', 'admin'), createArea)
