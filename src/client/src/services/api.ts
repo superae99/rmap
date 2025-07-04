@@ -46,9 +46,15 @@ export const authAPI = {
   },
   
   logout: async () => {
-    await apiRequest('/auth/logout', { method: 'POST' })
+    try {
+      await apiRequest('/auth/logout', { method: 'POST' })
+    } catch (error) {
+      console.error('로그아웃 API 오류:', error)
+    }
+    
     // 쿠키는 서버에서 자동으로 삭제되므로 localStorage 사용 안함
-    window.location.href = '/login'
+    // 페이지 완전 새로고침으로 상태 초기화
+    window.location.replace('/login')
   },
   
   changePassword: async (currentPassword: string, newPassword: string) => {

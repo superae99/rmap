@@ -92,8 +92,13 @@ export const getProfile = async (req: Request & { user?: any }, res: Response) =
 }
 
 // 로그아웃 시 쿠키 삭제
-export const logout = async (req: Request, res: Response) => {
-  res.clearCookie('authToken')
+export const logout = async (_req: Request, res: Response) => {
+  // 쿠키 설정과 동일한 옵션으로 삭제해야 함
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  })
   res.json({ message: '로그아웃되었습니다.' })
 }
 
