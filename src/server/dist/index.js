@@ -13,6 +13,7 @@ const partner_routes_1 = __importDefault(require("./routes/partner.routes"));
 const area_routes_1 = __importDefault(require("./routes/area.routes"));
 const sales_territory_routes_1 = __importDefault(require("./routes/sales-territory.routes"));
 const kakao_routes_1 = __importDefault(require("./routes/kakao.routes"));
+const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
 const error_middleware_1 = require("./middlewares/error.middleware");
 dotenv_1.default.config();
 // Platform.sh 환경변수 처리
@@ -54,6 +55,7 @@ app.use('/api/partners', partner_routes_1.default);
 app.use('/api/areas', area_routes_1.default);
 app.use('/api/sales-territories', sales_territory_routes_1.default);
 app.use('/api/kakao', kakao_routes_1.default);
+app.use('/api/admin', admin_routes_1.default);
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

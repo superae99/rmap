@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logout = exports.getProfile = exports.login = void 0;
+exports.changePassword = exports.logout = exports.getProfile = exports.login = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const database_1 = require("../config/database");
@@ -77,4 +77,50 @@ const logout = async (req, res) => {
     res.json({ message: '로그아웃되었습니다.' });
 };
 exports.logout = logout;
+// 패스워드 변경
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const employeeId = req.user?.employeeId;
+        // 필수 필드 검증
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: '현재 비밀번호와 새 비밀번호를 입력해주세요.' });
+        }
+        // 패스워드 정책 검증 (최소 8자, 숫자/문자/특수문자 포함)
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).json({
+                message: '비밀번호는 최소 8자 이상이며, 영문자, 숫자, 특수문자를 각각 하나 이상 포함해야 합니다.'
+            });
+        }
+        // 현재 비밀번호와 새 비밀번호가 같은지 확인
+        if (currentPassword === newPassword) {
+            return res.status(400).json({ message: '현재 비밀번호와 새 비밀번호가 동일합니다.' });
+        }
+        // 사용자 찾기
+        const user = await userRepository.findOne({
+            where: { employeeId, isActive: true }
+        });
+        if (!user) {
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
+        // 현재 비밀번호 확인
+        const isPasswordValid = await bcryptjs_1.default.compare(currentPassword, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: '현재 비밀번호가 올바르지 않습니다.' });
+        }
+        // 새 비밀번호 해시화
+        const hashedPassword = await bcryptjs_1.default.hash(newPassword, 10);
+        // 비밀번호 업데이트
+        user.password = hashedPassword;
+        user.passwordChangedAt = new Date();
+        await userRepository.save(user);
+        res.json({ message: '비밀번호가 성공적으로 변경되었습니다.' });
+    }
+    catch (error) {
+        console.error('패스워드 변경 오류:', error);
+        res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+    }
+};
+exports.changePassword = changePassword;
 //# sourceMappingURL=auth.controller.js.map

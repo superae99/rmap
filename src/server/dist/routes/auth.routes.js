@@ -9,5 +9,6 @@ router.post('/login', auth_controller_1.login);
 // 인증이 필요한 라우트
 router.get('/me', auth_middleware_1.authenticate, auth_controller_1.getProfile);
 router.post('/logout', auth_middleware_1.authenticate, auth_controller_1.logout);
+router.post('/change-password', auth_middleware_1.authenticate, auth_controller_1.changePassword);
 exports.default = router;
 //# sourceMappingURL=auth.routes.js.map
