@@ -33,8 +33,11 @@ const allowedOrigins = [
   'http://localhost:4000', // Client dev server
   'http://localhost:4001', // Client dev server (alternative port)
   'http://localhost:5173', // Vite dev server
-  process.env.CORS_ORIGIN, // Production Netlify URL
+  'https://r0map.netlify.app', // Production Netlify URL (hardcoded)
+  process.env.CORS_ORIGIN, // Production Netlify URL (from env)
 ].filter(Boolean)
+
+console.log('🌐 Allowed CORS origins:', allowedOrigins)
 
 app.use(cors({
   origin: (origin, callback) => {

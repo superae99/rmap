@@ -24,6 +24,11 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
+    // 디버깅: 쿠키와 헤더 확인
+    console.log('🔍 Auth Debug - Cookies:', req.cookies)
+    console.log('🔍 Auth Debug - Headers:', req.headers.cookie)
+    console.log('🔍 Auth Debug - Origin:', req.headers.origin)
+    
     // 토큰을 Authorization 헤더 또는 쿠키에서 가져오기
     let token = req.headers.authorization?.split(' ')[1]
     
@@ -33,6 +38,7 @@ export const authenticate = async (
     }
 
     if (!token) {
+      console.log('❌ No token found in headers or cookies')
       throw new AppError('No token provided', 401)
     }
 
@@ -53,7 +59,7 @@ export const authenticate = async (
 }
 
 export const authorize = (...allowedRoles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError('Unauthorized', 401))
     }
