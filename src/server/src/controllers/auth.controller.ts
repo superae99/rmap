@@ -58,10 +58,18 @@ export const login = async (req: Request, res: Response) => {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // HTTPS에서만
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const, // Cross-origin 허용
+      sameSite: 'lax' as const, // 'none' 대신 'lax' 사용 (더 안정적)
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
       path: '/' // 명시적 경로 설정
     }
+    
+    // 디버깅: 토큰에 포함된 사용자 정보 로그
+    console.log('🔑 JWT 토큰 생성 - 사용자 정보:', {
+      employeeId: user.employeeId,
+      account: user.account,
+      position: user.position,
+      jobTitle: user.jobTitle
+    })
     
     res.cookie('authToken', token, cookieOptions)
 
@@ -100,7 +108,7 @@ export const logout = async (_req: Request, res: Response) => {
   res.clearCookie('authToken', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+    sameSite: 'lax' as const,
     path: '/'
   })
   res.json({ message: '로그아웃되었습니다.' })

@@ -12,6 +12,10 @@ async function apiRequest(
     ...(options.headers as Record<string, string>),
   }
   
+  // 디버깅: 쿠키 정보 출력
+  console.log('🍪 Request cookies:', document.cookie)
+  console.log('🌐 Request URL:', `${API_URL}${endpoint}`)
+  
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
@@ -32,12 +36,31 @@ async function apiRequest(
 // 인증 API
 export const authAPI = {
   login: async (account: string, password: string) => {
-    const data = await apiRequest('/auth/login', {
+    // 디버깅을 위해 직접 fetch 호출
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ account, password }),
+      credentials: 'include', // 쿠키 포함
     })
     
-    // 쿠키는 서버에서 자동으로 설정되므로 localStorage 사용 안함
+    if (!response.ok) {
+      throw new Error(`Login failed: ${response.statusText}`)
+    }
+    
+    // 디버깅: 응답 헤더 확인
+    console.log('🔒 Login response headers:')
+    for (let [key, value] of response.headers.entries()) {
+      console.log(`  ${key}: ${value}`)
+    }
+    
+    const data = await response.json()
+    
+    // 로그인 후 쿠키 확인
+    console.log('🍪 After login cookies:', document.cookie)
+    
     return data
   },
   
