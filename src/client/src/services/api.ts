@@ -75,7 +75,30 @@ export const authAPI = {
       console.error('로그아웃 API 오류:', error)
     }
     
-    // 쿠키는 서버에서 자동으로 삭제되므로 localStorage 사용 안함
+    // 클라이언트에서도 쿠키 강제 삭제 시도
+    try {
+      // 가능한 모든 도메인과 경로로 쿠키 삭제 시도
+      const domains = [
+        '', // 현재 도메인
+        '.netlify.app',
+        '.master-7rqtwti-fru7lrwunilmo.au.platformsh.site',
+        'r0map.netlify.app'
+      ]
+      
+      const paths = ['/', '/api']
+      
+      domains.forEach(domain => {
+        paths.forEach(path => {
+          document.cookie = `authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}`
+          document.cookie = `authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`
+        })
+      })
+      
+      console.log('🗑️ 클라이언트 쿠키 삭제 완료')
+    } catch (error) {
+      console.error('클라이언트 쿠키 삭제 실패:', error)
+    }
+    
     // 페이지 완전 새로고침으로 상태 초기화
     window.location.replace('/login')
   },
