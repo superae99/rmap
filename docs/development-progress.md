@@ -290,7 +290,9 @@ VITE_API_URL=http://localhost:5001
 | 영역 시스템 완전 구현 | 100% | ✅ **완료** |
 | 영역 상세보기 및 UI/UX | 100% | ✅ **완료** |
 | 카카오맵 로딩 및 안정화 | 100% | ✅ **완료** |
-| **전체 진행률** | **100%** | ✅ **완료** |
+| 역할 기반 UI 제어 | 100% | ✅ **완료** |
+| **보안 강화 (2025-07-04)** | **100%** | 🔒 **보안 완료** |
+| **전체 진행률** | **100%** | 🔒 **보안 강화 완료** |
 
 ---
 
@@ -1204,5 +1206,104 @@ VITE_API_URL=http://localhost:5001/api
 
 ---
 
-*마지막 업데이트: 2025-07-02 (역할 기반 UI 제어 및 홈페이지 UI/UX 대폭 개선 완료)*
-*상태: 모든 핵심 기능 100% 완료, UI/UX 현대화 완료, 프로덕션 운영 중*
+---
+
+## 🔒 Phase 13: 보안 강화 및 인증 시스템 고도화 (2025-07-04) ✅ (100%)
+
+### 1. 패스워드 변경 API 구현 ✅
+- **엔드포인트**: `POST /api/auth/change-password`
+- **보안 정책**: 
+  - 최소 8자 이상
+  - 영문자, 숫자, 특수문자 각각 포함 필수
+  - 현재 패스워드 검증 후 변경 가능
+- **암호화**: bcrypt 해싱 적용
+- **이력 관리**: passwordChangedAt 필드로 변경 시점 기록
+
+### 2. Area API 접근 제어 강화 ✅
+- **인증 강화**: 모든 area API 엔드포인트에 인증 미들웨어 적용
+  - `GET /api/areas` - 인증 필수로 변경
+  - `GET /api/areas/with-sales-territory` - 인증 필수로 변경
+  - `GET /api/areas/:id` - 인증 필수로 변경
+- **보안 효과**: 미인증 사용자의 민감한 영역 및 판매구역 데이터 접근 차단
+- **API 응답**: 인증 실패 시 `{"success":false,"error":{"message":"Invalid token"}}` 반환
+
+### 3. localStorage → httpOnly 쿠키 인증 전환 ✅
+- **서버 변경사항**:
+  - `cookie-parser` 미들웨어 추가
+  - 인증 미들웨어에서 Authorization 헤더와 쿠키 모두 지원
+  - 로그인 시 httpOnly 쿠키 자동 설정 (secure, sameSite=strict)
+  - 로그아웃 시 쿠키 자동 삭제
+- **클라이언트 변경사항**:
+  - 모든 localStorage 토큰 관리 로직 제거
+  - API 요청에 `credentials: 'include'` 추가하여 쿠키 자동 포함
+  - 서버 기반 인증 상태 확인으로 단순화
+- **보안 향상**:
+  - XSS 공격으로부터 토큰 보호 (JavaScript 접근 불가)
+  - CSRF 공격 방지 (SameSite=strict)
+  - HTTPS에서만 쿠키 전송 (secure flag)
+
+### 4. API 율제한(Rate Limiting) 구현 ✅
+- **express-rate-limit** 패키지 사용
+- **율제한 정책**:
+  - **로그인 API**: IP당 15분에 5회 시도
+  - **패스워드 변경 API**: IP당 1시간에 3회 시도
+  - **일반 API**: IP당 15분에 100회 요청
+- **보안 효과**: 브루트포스 공격 방지 및 무차별 대입 시도 차단
+- **사용자 경험**: 429 상태 코드와 한국어 안내 메시지 제공
+- **모니터링**: X-RateLimit 헤더로 요청 제한 상태 추적 가능
+
+### 🛡️ 보안 개선 효과
+
+| 보안 위험 | 이전 상태 | 개선 후 | 보안 수준 |
+|-----------|-----------|---------|----------|
+| **XSS 공격** | localStorage에 JWT 저장 | httpOnly 쿠키 | 🔒 HIGH |
+| **브루트포스 공격** | 율제한 없음 | IP별 시도횟수 제한 | 🔒 HIGH |
+| **미인증 데이터 접근** | 일부 API 공개 | 모든 API 인증 필수 | 🔒 HIGH |
+| **CSRF 공격** | SameSite 미설정 | SameSite=strict | 🔒 MEDIUM |
+| **패스워드 정책** | 정책 없음 | 복잡도 요구사항 | 🔒 MEDIUM |
+| **토큰 탈취** | 클라이언트 저장 | 서버 전용 쿠키 | 🔒 HIGH |
+
+### 🔧 구현된 보안 미들웨어
+
+#### **rate-limit.middleware.ts**
+```typescript
+// 로그인 율제한: 15분에 5회
+export const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: '너무 많은 로그인 시도가 있었습니다. 15분 후 다시 시도해주세요.'
+})
+
+// 패스워드 변경 율제한: 1시간에 3회  
+export const passwordChangeRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  message: '너무 많은 비밀번호 변경 시도가 있었습니다. 1시간 후 다시 시도해주세요.'
+})
+```
+
+#### **auth.middleware.ts 개선**
+```typescript
+// 쿠키와 헤더 모두에서 토큰 읽기 지원
+let token = req.headers.authorization?.split(' ')[1]
+if (!token) {
+  token = req.cookies?.authToken
+}
+```
+
+### 🚀 배포 현황
+- **Platform.sh 서버**: 모든 보안 개선사항 배포 완료
+- **Netlify 클라이언트**: 쿠키 기반 인증 적용 완료
+- **운영 환경**: 실시간 보안 모니터링 가능
+
+### 📋 테스트 완료 사항
+- [x] 로그인 6번 시도 시 429 오류 반환 확인
+- [x] 쿠키 기반 인증 정상 작동 확인
+- [x] 미인증 area API 접근 차단 확인
+- [x] 패스워드 정책 검증 테스트 완료
+- [x] httpOnly 쿠키 설정 확인
+
+---
+
+*마지막 업데이트: 2025-07-04 (보안 강화 및 인증 시스템 고도화 완료)*
+*상태: 모든 핵심 기능 100% 완료, UI/UX 현대화 완료, 보안 강화 완료, 프로덕션 운영 중*
