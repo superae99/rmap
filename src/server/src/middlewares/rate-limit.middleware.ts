@@ -1,13 +1,24 @@
 import rateLimit from 'express-rate-limit'
 
-// 일반 인증 API 율제한 (로그인)
+// 일반 인증 API 율제한 (로그인) - 디버깅을 위해 일시적으로 완화
 export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15분
-  max: 5, // 15분 동안 최대 5회 시도
+  windowMs: 5 * 60 * 1000, // 5분으로 단축
+  max: 20, // 최대 시도 횟수 증가 (디버깅용)
+  // 디버깅 모드: 특정 조건에서 rate limit 우회
+  skip: (req) => {
+    // 디버깅을 위해 Netlify에서 오는 요청은 rate limit 우회
+    const origin = req.headers.origin
+    const isFromNetlify = origin && origin.includes('netlify.app')
+    if (isFromNetlify) {
+      console.log('🚫 Rate limit 우회 (Netlify 디버깅):', origin)
+      return true
+    }
+    return false
+  },
   message: {
     success: false,
     error: {
-      message: '너무 많은 로그인 시도가 있었습니다. 15분 후 다시 시도해주세요.',
+      message: '너무 많은 로그인 시도가 있었습니다. 5분 후 다시 시도해주세요.',
       code: 'TOO_MANY_ATTEMPTS'
     }
   },
@@ -17,7 +28,7 @@ export const authRateLimit = rateLimit({
     res.status(429).json({
       success: false,
       error: {
-        message: '너무 많은 로그인 시도가 있었습니다. 15분 후 다시 시도해주세요.',
+        message: '너무 많은 로그인 시도가 있었습니다. 5분 후 다시 시도해주세요.',
         code: 'TOO_MANY_ATTEMPTS'
       }
     })
