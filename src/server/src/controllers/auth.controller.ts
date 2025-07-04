@@ -58,7 +58,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie('authToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // HTTPS에서만
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-origin 허용
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7일
     })
 
