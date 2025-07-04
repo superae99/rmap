@@ -20,8 +20,8 @@ async function apiRequest(
   
   if (!response.ok) {
     if (response.status === 401) {
-      // 인증 실패 시 커스텀 이벤트 발생 (URL 변경 없이 처리)
-      window.dispatchEvent(new CustomEvent('auth-required'))
+      // 인증 실패 시 에러만 throw (App.tsx에서 처리)
+      throw new Error('Unauthorized')
     }
     throw new Error(`API Error: ${response.statusText}`)
   }
