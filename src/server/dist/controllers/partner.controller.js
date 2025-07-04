@@ -25,9 +25,20 @@ const getPartners = async (req, res) => {
             const userPosition = req.user.position || '';
             const userJobTitle = req.user.jobTitle || '';
             const userAccount = req.user.account || '';
+            const userFieldType = req.user.fieldType || '';
+            // 디버깅: 파트너 조회 권한 체크
+            const isAdminStaff = userAccount === 'admin' || userJobTitle.includes('시스템관리자') ||
+                userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭';
+            console.log('🔍 getPartners - 권한 체크:', {
+                account: userAccount,
+                position: userPosition,
+                jobTitle: userJobTitle,
+                fieldType: userFieldType,
+                isAdminStaff,
+                filters: { branchFilter, officeFilter, managerFilter }
+            });
             // admin/staff 계정: 모든 필터 사용 가능
-            if (userAccount === 'admin' || userJobTitle.includes('시스템관리자') ||
-                userPosition.includes('스탭') || userJobTitle.includes('스탭')) {
+            if (isAdminStaff) {
                 // 지사 필터 적용
                 if (branchFilter) {
                     query.andWhere('manager.branchName = :branchFilter', { branchFilter });

@@ -76,7 +76,7 @@ export const authorize = (...allowedRoles: string[]) => {
       userRole = 'admin'
     }
     // staff 권한 (스탭 - 조회만 가능, 생성/수정 불가)
-    else if (userPosition.includes('스탭') || userJobTitle.includes('스탭')) {
+    else if (userPosition.includes('스탭') || userJobTitle.includes('스탭') || (req.user as any).fieldType === '스탭') {
       userRole = 'staff'
     }
     // 지점장 권한
