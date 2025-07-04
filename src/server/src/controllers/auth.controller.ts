@@ -41,7 +41,8 @@ export const login = async (req: Request, res: Response) => {
         account: user.account,
         employeeName: user.employeeName,
         position: user.position,
-        jobTitle: user.jobTitle
+        jobTitle: user.jobTitle,
+        fieldType: user.fieldType  // Staff 권한 체크를 위해 fieldType 추가
       },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as SignOptions

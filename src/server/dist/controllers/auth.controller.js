@@ -37,7 +37,8 @@ const login = async (req, res) => {
             account: user.account,
             employeeName: user.employeeName,
             position: user.position,
-            jobTitle: user.jobTitle
+            jobTitle: user.jobTitle,
+            fieldType: user.fieldType // Staff 권한 체크를 위해 fieldType 추가
         }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
         // 마지막 로그인 시간 업데이트
         user.lastLogin = new Date();
