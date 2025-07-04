@@ -365,13 +365,14 @@ const getFilterOptions = async (req, res) => {
         const userPosition = req.user.position || '';
         const userJobTitle = req.user.jobTitle || '';
         const userAccount = req.user.account || '';
+        const userFieldType = req.user.fieldType || '';
         const userRepository = database_1.AppDataSource.getRepository(User_1.User);
         let branches = [];
         let offices = [];
         let managers = [];
         // admin/staff 계정: 실제 거래처 데이터가 있는 모든 필터 옵션 제공
         if (userAccount === 'admin' || userJobTitle.includes('시스템관리자') ||
-            userPosition.includes('스탭') || userJobTitle.includes('스탭')) {
+            userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭') {
             // 지사 목록 (실제 거래처가 있는 지사만)
             const branchData = await userRepository
                 .createQueryBuilder('user')
