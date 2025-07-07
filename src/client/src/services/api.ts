@@ -34,9 +34,7 @@ async function apiRequest(
 // 인증 API
 export const authAPI = {
   login: async (account: string, password: string) => {
-    
     try {
-      
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -46,15 +44,11 @@ export const authAPI = {
         credentials: 'include', // 쿠키 포함
       })
       
-      
       if (!response.ok) {
-        const errorData = await response.text()
         throw new Error(`Login failed: ${response.status} ${response.statusText}`)
       }
       
-      
       const data = await response.json()
-      
       return data
     } catch (error) {
       throw error

@@ -26,12 +26,10 @@ const LoginPage = () => {
     setLoading(true)
 
     try {
-      const response = await authAPI.login(account, password)
-      console.log('로그인 성공:', response)
+      await authAPI.login(account, password)
       // 로그인 성공 시에만 페이지 새로고침 (URL 변경 없이)
       window.location.reload()
     } catch (err: any) {
-      console.error('로그인 실패:', err)
       
       // 입력 정보가 틀렸을 때 페이지 이동하지 않고 에러 메시지만 표시
       const errorMessage = err?.response?.data?.message || 

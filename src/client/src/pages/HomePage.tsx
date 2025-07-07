@@ -206,10 +206,6 @@ const HomePage = () => {
     
     const rtmChannel = channelMapping[normalizedChannel] || '업소' // 매핑되지 않은 경우 기본값
     
-    // 처음 몇 개의 채널만 로그 출력 (디버깅용)
-    if (!channelMapping[normalizedChannel] && normalizedChannel) {
-      console.warn(`매핑되지 않은 채널: "${normalizedChannel}" → 기본값 "업소" 사용`)
-    }
     
     return rtmChannel
   }
@@ -244,21 +240,6 @@ const HomePage = () => {
       setAreas(areasData)
 
 
-      // RTM 채널 통계 출력 (디버깅용)
-      if (partnersData.partners || partnersData.length) {
-        const dataArray = partnersData.partners || partnersData
-        const channelStats: { [key: string]: number } = {}
-        const rtmStats: { [key: string]: number } = {}
-        
-        dataArray.forEach((partner: Partner) => {
-          const channel = partner.channel || '기타'
-          const rtmChannel = partner.rtmChannel || '없음'
-          
-          channelStats[channel] = (channelStats[channel] || 0) + 1
-          rtmStats[rtmChannel] = (rtmStats[rtmChannel] || 0) + 1
-        })
-        
-      }
       
     } catch (error) {
       console.error('데이터 로드 실패:', error)
@@ -284,13 +265,10 @@ const HomePage = () => {
       const isValidRtmChannel = ['업소', '매장', '스피리츠', 'KA'].includes(rtmChannel)
       const channelVisible = isValidRtmChannel ? rtmChannelFilters[rtmChannel as keyof typeof rtmChannelFilters] : true
       
-      // 첫 번째 거래처만 디버깅 로그
-      if (partners.indexOf(partner) === 0) {
-      }
       
       return validCoords && channelVisible
     })
-    .map((partner, index) => {
+    .map((partner) => {
       const managerColor = getManagerColor(partner.currentManagerEmployeeId)
       const lat = Number(partner.latitude)
       const lng = Number(partner.longitude)
@@ -306,9 +284,6 @@ const HomePage = () => {
         user.jobTitle?.includes('지점장')
       ) && !(user.position?.includes('스탭') || user.jobTitle?.includes('스탭'))
       
-      // 디버깅용 로그 (처음 10개만)
-      if (index < 10) {
-      }
       
       return {
         id: partner.partnerCode,
@@ -381,9 +356,6 @@ const HomePage = () => {
       // 담당자 ID 기반으로 마커와 동일한 색상 적용
       areaColor = getManagerColor(salesTerritory.managerEmployeeId)
       
-      // 디버깅 로그 (처음 5개 영역만)
-      if (areas.indexOf(area) < 5) {
-      }
     }
     
 
@@ -436,7 +408,6 @@ const HomePage = () => {
       await loadAvailableManagers(partner.officeName)
       
       setShowManagerChangeModal(true)
-    } else {
     }
   }
 
@@ -1382,7 +1353,6 @@ const HomePage = () => {
                 }
 
                 try {
-
                   // API 호출
                   await partnerAPI.changeManager(selectedPartner.partnerCode, {
                     currentManagerEmployeeId: newManagerInfo.employeeId,
