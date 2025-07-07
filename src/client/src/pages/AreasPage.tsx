@@ -237,31 +237,18 @@ const AreasPage = () => {
     try {
       setLoading(true)
       
-      console.log('🏢 AreasPage - 검색 시작, 필터:', {
-        branchFilter: filters.branchFilter,
-        officeFilter: filters.officeFilter,
-        managerFilter: filters.managerFilter
-      })
-      
       // 거래처와 상권 데이터를 병렬로 로드
-      console.log('🏢 AreasPage - API 호출 시작...')
       const [partnersResponse, areasData] = await Promise.all([
         partnerAPI.getPartners({
-          // limit 제거하여 전체 데이터 조회
           branchFilter: filters.branchFilter,
           officeFilter: filters.officeFilter,
           managerFilter: filters.managerFilter
         }),
         loadAreasData(filters)
       ])
-      console.log('🏢 AreasPage - API 호출 완료')
-      
-      console.log('🏢 AreasPage - 원본 거래처 응답:', partnersResponse)
       
       // 거래처 데이터 처리
       const partnersData = partnersResponse.partners || partnersResponse
-      console.log('🏢 AreasPage - 파싱된 거래처 데이터:', partnersData, '길이:', Array.isArray(partnersData) ? partnersData.length : 'not array')
-      
       const validPartners = Array.isArray(partnersData) ? partnersData.filter(partner => {
         const lat = Number(partner.latitude)
         const lng = Number(partner.longitude)
@@ -270,7 +257,6 @@ const AreasPage = () => {
                lng >= 124 && lng <= 132   // 한국 경도 범위
       }) : []
       
-      console.log('🏢 AreasPage - 유효한 거래처:', validPartners.length, '개')
       setPartners(validPartners)
       
       // 필터된 상권들의 sido, sgg 수집
@@ -296,10 +282,7 @@ const AreasPage = () => {
 
       // 각 상권에 포함되는 거래처들 찾기
       const findPartnersInArea = (area: any, partnersArray: Partner[]): Partner[] => {
-        console.log(`🏢 AreasPage - ${area.name} 상권 분석 시작 - 전체 거래처 ${partnersArray.length}개`)
-        
         if (!area.coordinates || !Array.isArray(area.coordinates) || area.coordinates.length < 3) {
-          console.warn(`상권 ${area.name}: 유효하지 않은 좌표 데이터`)
           return []
         }
 
@@ -329,12 +312,10 @@ const AreasPage = () => {
           )
           
           if (!validPolygon) {
-            console.warn(`상권 ${area.name}: 유효하지 않은 폴리곤 좌표`)
             return []
           }
           
         } catch (error) {
-          console.warn(`좌표 변환 실패 for area ${area.name}:`, error)
           return []
         }
 
@@ -343,7 +324,7 @@ const AreasPage = () => {
           const lat = Number(partner.latitude)
           const lng = Number(partner.longitude)
           
-          // 좌표 유효성 검증 (개선된 버전)
+          // 좌표 유효성 검증
           if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
             return false
           }
@@ -360,8 +341,6 @@ const AreasPage = () => {
           
           return true
         })
-        
-        console.log(`상권 ${area.name}: 전체 거래처 ${partnersArray.length}개 → 유효 거래처 ${validPartners.length}개`)
 
         // Point-in-Polygon 검사
         const partnersInArea = validPartners.filter(partner => {
@@ -371,12 +350,10 @@ const AreasPage = () => {
           try {
             return isPointInPolygon([lng, lat], polygon)
           } catch (error) {
-            console.warn(`Point-in-Polygon 검사 실패 - 거래처: ${partner.partnerCode}, 상권: ${area.name}`, error)
             return false
           }
         })
         
-        console.log(`상권 ${area.name}: 유효 거래처 ${validPartners.length}개 중 ${partnersInArea.length}개 매칭`)
         return partnersInArea
       }
 
@@ -385,30 +362,6 @@ const AreasPage = () => {
         // 상권 내 거래처들 찾기
         const partnersInArea = validPartners.length > 0 ? findPartnersInArea(area, validPartners) : []
         
-        // 디버깅 정보 출력 (첫 3개 상권만)
-        if (areasData.indexOf(area) < 3) {
-          console.log(`🔍 상권 "${area.name}" 상세 분석:`, {
-            totalPartners: validPartners.length,
-            validPartners: validPartners.filter(p => {
-              const lat = Number(p.latitude)
-              const lng = Number(p.longitude)
-              return lat !== 0 || lng !== 0
-            }).length,
-            partnersInArea: partnersInArea.length,
-            coordinatesCount: area.coordinates?.length || 0,
-            samplePartners: partnersInArea.slice(0, 2).map(p => ({
-              code: p.partnerCode,
-              name: p.partnerName,
-              lat: p.latitude,
-              lng: p.longitude
-            })),
-            invalidCoords: validPartners.filter(p => {
-              const lat = Number(p.latitude)
-              const lng = Number(p.longitude)
-              return lat === 0 && lng === 0
-            }).length
-          })
-        }
         
         // 상권 내 거래처들의 담당자 정보 수집
         const managersInArea = new Set<string>()
@@ -528,10 +481,7 @@ const AreasPage = () => {
       setHasSearched(true)
       
     } catch (error) {
-      console.error('🏢 AreasPage - 데이터 로드 실패:', error)
-      if (error instanceof Error) {
-        console.error('🏢 AreasPage - 에러 스택:', error.stack)
-      }
+      console.error('데이터 로드 실패:', error)
       setPartners([])
       setAreas([])
     } finally {
