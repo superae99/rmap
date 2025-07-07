@@ -891,12 +891,10 @@ const AreasPage = () => {
                   key: area.id,
                   style: {
                     backgroundColor: 'white',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     padding: '20px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    border: area.salesTerritory?.managerName ? 
-                      (area.salesTerritory.managerName.includes('관리 구역 담당 없음') ? '2px solid #fff3e0' : '2px solid #e8f5e8') 
-                      : '2px solid #ffebee',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    border: '1px solid rgba(102, 126, 234, 0.1)',
                     position: 'relative'
                   }
                 },
