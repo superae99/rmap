@@ -76,9 +76,10 @@ export const authAPI = {
     try {
       const domains = [
         '', // 현재 도메인
-        '.netlify.app',
+        '.rtmarket.store',
+        'rtmarket.store',
         '.master-7rqtwti-fru7lrwunilmo.au.platformsh.site',
-        'r0map.netlify.app'
+        '.netlify.app' // 이전 도메인도 포함하여 완전한 로그아웃 보장
       ]
       
       const paths = ['/', '/api']

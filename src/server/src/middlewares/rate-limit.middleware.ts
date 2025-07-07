@@ -6,11 +6,14 @@ export const authRateLimit = rateLimit({
   max: 20, // 최대 시도 횟수 증가 (디버깅용)
   // 디버깅 모드: 특정 조건에서 rate limit 우회
   skip: (req) => {
-    // 디버깅을 위해 Netlify에서 오는 요청은 rate limit 우회
+    // 디버깅을 위해 특정 도메인에서 오는 요청은 rate limit 우회
     const origin = req.headers.origin
-    const isFromNetlify = origin && origin.includes('netlify.app')
-    if (isFromNetlify) {
-      console.log('🚫 Rate limit 우회 (Netlify 디버깅):', origin)
+    const isFromAllowedDomain = origin && (
+      origin.includes('rtmarket.store') || 
+      origin.includes('netlify.app') // 이전 도메인도 일시적으로 허용
+    )
+    if (isFromAllowedDomain) {
+      console.log('🚫 Rate limit 우회 (디버깅):', origin)
       return true
     }
     return false
