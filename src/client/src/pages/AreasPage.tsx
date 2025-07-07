@@ -1149,22 +1149,6 @@ const AreasPage = () => {
                     return []
                   }
                   
-                  console.log('모달 지도 영역 데이터:', {
-                    areaId: selectedArea.id,
-                    areaName: selectedArea.name,
-                    originalCoords: selectedArea.coordinates.length,
-                    normalizedCoords: normalizedCoords.length,
-                    color: selectedArea.color || '#667eea',
-                    sampleOriginalCoord: selectedArea.coordinates[0],
-                    sampleNormalizedCoord: normalizedCoords[0],
-                    coordBounds: {
-                      minLng: Math.min(...normalizedCoords.map(c => c[0])),
-                      maxLng: Math.max(...normalizedCoords.map(c => c[0])),
-                      minLat: Math.min(...normalizedCoords.map(c => c[1])),
-                      maxLat: Math.max(...normalizedCoords.map(c => c[1]))
-                    }
-                  })
-                  
                   const areaData = {
                     id: selectedArea.id,
                     name: selectedArea.name,
@@ -1183,10 +1167,6 @@ const AreasPage = () => {
                     return []
                   }
                   
-                  console.log('모달 지도 마커 생성 시작:', {
-                    areaId: selectedArea.id,
-                    totalPartners: selectedArea.partnersInArea.length
-                  })
                   
                   const validPartners = (selectedArea.partnersInArea as any[]).filter((partner: any) => {
                     const lat = Number(partner.latitude)
@@ -1206,18 +1186,7 @@ const AreasPage = () => {
                     return isValid
                   })
                   
-                  // 유효한 좌표 샘플 출력 (필터링 후)
-                  if (validPartners.length > 0) {
-                    console.log('유효한 거래처 좌표 샘플:', {
-                      name: validPartners[0].partnerName,
-                      lat: Number(validPartners[0].latitude),
-                      lng: Number(validPartners[0].longitude),
-                      originalLat: validPartners[0].latitude,
-                      originalLng: validPartners[0].longitude
-                    })
-                  }
                   
-                  console.log('유효한 거래처 마커:', validPartners.length)
                   
                   const markers = validPartners.map((partner: any) => {
                     const managerColor = getManagerColor(partner.currentManagerEmployeeId)
@@ -1262,7 +1231,6 @@ const AreasPage = () => {
                     return markerData
                   })
                   
-                  console.log('생성된 마커 데이터:', markers.length, '개')
                   
                   return markers
                 })()
