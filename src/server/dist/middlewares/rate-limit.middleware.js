@@ -5,19 +5,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generalRateLimit = exports.passwordChangeRateLimit = exports.authRateLimit = void 0;
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-// 일반 인증 API 율제한 (로그인) - 디버깅을 위해 일시적으로 완화
+// 일반 인증 API 율제한 (로그인) - 완화된 설정
 exports.authRateLimit = (0, express_rate_limit_1.default)({
-    windowMs: 5 * 60 * 1000, // 5분으로 단축
-    max: 20, // 최대 시도 횟수 증가 (디버깅용)
-    // 디버깅 모드: 특정 조건에서 rate limit 우회
+    windowMs: 15 * 60 * 1000, // 15분으로 연장
+    max: 50, // 최대 시도 횟수 대폭 증가
+    // 프로덕션 도메인은 rate limit 우회
     skip: (req) => {
-        // 디버깅을 위해 특정 도메인에서 오는 요청은 rate limit 우회
         const origin = req.headers.origin;
-        const isFromAllowedDomain = origin && (origin.includes('rtmarket.store') ||
-            origin.includes('netlify.app') // 이전 도메인도 일시적으로 허용
-        );
-        if (isFromAllowedDomain) {
-            console.log('🚫 Rate limit 우회 (디버깅):', origin);
+        const referer = req.headers.referer;
+        const allowedDomains = [
+            'rtmarket.store',
+            'netlify.app',
+            'r0map.netlify.app',
+            'localhost:5173'
+        ];
+        const isAllowed = allowedDomains.some(domain => (origin && origin.includes(domain)) ||
+            (referer && referer.includes(domain)));
+        if (isAllowed) {
+            console.log('🚫 Rate limit 우회 (허용된 도메인):', origin || referer);
             return true;
         }
         return false;
