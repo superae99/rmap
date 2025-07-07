@@ -248,8 +248,12 @@ const AreasPage = () => {
         loadAreasData(filters)
       ])
       
+      console.log('🏢 AreasPage - 원본 거래처 응답:', partnersResponse)
+      
       // 거래처 데이터 처리
       const partnersData = partnersResponse.partners || partnersResponse
+      console.log('🏢 AreasPage - 파싱된 거래처 데이터:', partnersData, '길이:', Array.isArray(partnersData) ? partnersData.length : 'not array')
+      
       const validPartners = Array.isArray(partnersData) ? partnersData.filter(partner => {
         const lat = Number(partner.latitude)
         const lng = Number(partner.longitude)
@@ -258,6 +262,7 @@ const AreasPage = () => {
                lng >= 124 && lng <= 132   // 한국 경도 범위
       }) : []
       
+      console.log('🏢 AreasPage - 유효한 거래처:', validPartners.length, '개')
       setPartners(validPartners)
       
       // 필터된 상권들의 sido, sgg 수집
@@ -283,6 +288,8 @@ const AreasPage = () => {
 
       // 각 상권에 포함되는 거래처들 찾기
       const findPartnersInArea = (area: any): Partner[] => {
+        console.log(`🏢 AreasPage - ${area.name} 상권 분석 시작 - 전체 거래처 ${partners.length}개`)
+        
         if (!area.coordinates || !Array.isArray(area.coordinates) || area.coordinates.length < 3) {
           console.warn(`상권 ${area.name}: 유효하지 않은 좌표 데이터`)
           return []
