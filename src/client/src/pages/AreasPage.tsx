@@ -642,222 +642,198 @@ const AreasPage = () => {
       )
     ),
 
-    // 검색 및 필터 영역 (FilterPanel 사용)
+    // 검색 및 필터 영역 (한 줄로 배치)
     React.createElement('div',
       { 
         style: { 
-          marginBottom: '20px'
+          marginBottom: '20px',
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          padding: '20px'
         } 
       },
       React.createElement('div',
         {
           style: {
             display: 'flex',
-            gap: '20px',
-            marginBottom: '15px'
+            gap: '12px',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap'
           }
         },
         
-        // FilterPanel 컴포넌트
-        React.createElement('div', { style: { flex: 1 } },
-          React.createElement('div', 
-            {
-              style: {
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }
-            },
-            React.createElement('div',
-              {
-                style: {
-                  padding: '20px',
-                  borderBottom: '1px solid #eee'
-                }
-              },
-              React.createElement('h3', 
-                { style: { margin: '0 0 15px 0', fontSize: '16px', fontWeight: '600' } }, 
-                '필터'
-              ),
-              React.createElement('div',
-                {
-                  style: {
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: '12px'
-                  }
-                },
-                
-                // 지사 필터 - 지점장에게는 숨김
-                !isBranchManager && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
-                  React.createElement('label', 
-                    { style: { fontSize: '12px', fontWeight: 'bold' } }, 
-                    '지사'
-                  ),
-                  React.createElement('select', {
-                    value: filters.branchFilter || '',
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('branchFilter', e.target.value || null),
-                    style: {
-                      padding: '6px 8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '13px'
-                    }
-                  },
-                    React.createElement('option', { value: '' }, '전체'),
-                    ...(options?.branches || []).map(branch =>
-                      React.createElement('option', { key: branch, value: branch }, branch)
-                    )
-                  )
-                ),
-
-                // 지점 필터 - 지점장에게는 숨김
-                !isBranchManager && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
-                  React.createElement('label', 
-                    { style: { fontSize: '12px', fontWeight: 'bold' } }, 
-                    '지점'
-                  ),
-                  React.createElement('select', {
-                    value: filters.officeFilter || '',
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('officeFilter', e.target.value || null),
-                    style: {
-                      padding: '6px 8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '13px'
-                    }
-                  },
-                    React.createElement('option', { value: '' }, '전체'),
-                    ...(options?.offices || [])
-                      .filter(office => !filters.branchFilter || office.branchName === filters.branchFilter)
-                      .map(office =>
-                        React.createElement('option', { key: office.officeName, value: office.officeName }, office.officeName)
-                      )
-                  )
-                ),
-
-                // 담당자 필터
-                React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
-                  React.createElement('label', 
-                    { style: { fontSize: '12px', fontWeight: 'bold' } }, 
-                    '담당자'
-                  ),
-                  React.createElement('select', {
-                    value: filters.managerFilter || '',
-                    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('managerFilter', e.target.value || null),
-                    style: {
-                      padding: '6px 8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '13px'
-                    }
-                  },
-                    React.createElement('option', { value: '' }, '전체'),
-                    ...(options?.managers || [])
-                      .filter(manager => {
-                        if (filters.branchFilter && manager.branchName !== filters.branchFilter) return false
-                        if (filters.officeFilter && manager.officeName !== filters.officeFilter) return false
-                        return true
-                      })
-                      .map(manager =>
-                        React.createElement('option', { key: manager.employeeId, value: manager.employeeId }, `${manager.employeeName} (${manager.officeName})`)
-                      )
-                  )
-                )
-              ),
-              
-              // 조회 버튼
-              React.createElement('div',
-                {
-                  style: {
-                    paddingTop: '15px',
-                    borderTop: '1px solid #eee',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }
-                },
-                React.createElement('button',
-                  {
-                    onClick: handleSearch,
-                    disabled: loading,
-                    style: {
-                      backgroundColor: loading ? '#ccc' : '#667eea',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      padding: '8px 16px',
-                      minWidth: '100px',
-                      height: '32px'
-                    }
-                  },
-                  loading ? '조회중...' : '조회'
-                ),
-                React.createElement('button',
-                  {
-                    type: 'button',
-                    onClick: resetFilters,
-                    disabled: loading,
-                    style: {
-                      backgroundColor: loading ? '#aaa' : '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      padding: '8px 16px',
-                      marginLeft: '8px'
-                    }
-                  },
-                  '초기화'
-                )
-              )
-            )
-          )
-        ),
-        
-        // 검색어 입력
+        // 검색어 입력 (첫 번째)
         React.createElement('div', 
           { 
             style: { 
-              flex: '0 0 300px',
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              flex: '1',
+              minWidth: '200px'
             } 
           },
-          React.createElement('form', 
-            {
-              onSubmit: (e: React.FormEvent) => {
-                e.preventDefault()
-              },
-              style: {
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px'
-              }
-            },
-            React.createElement('label', 
-              { style: { fontSize: '12px', fontWeight: 'bold' } }, 
-              '검색어'
-            ),
-            React.createElement('input', {
-              type: 'text',
-              value: searchTerm,
-              onChange: (e) => setSearchTerm(e.target.value),
-              placeholder: '상권명, 설명 검색',
-              style: {
-                padding: '6px 8px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '13px'
-              }
-            })
+          React.createElement('label', 
+            { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+            '검색어'
+          ),
+          React.createElement('input', {
+            type: 'text',
+            value: searchTerm,
+            onChange: (e) => setSearchTerm(e.target.value),
+            placeholder: '상권명, 설명 검색',
+            style: {
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '13px'
+            }
+          })
+        ),
+        
+        // 지사 필터 - 지점장에게는 숨김
+        !isBranchManager && React.createElement('div', 
+          { 
+            style: { 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '4px',
+              minWidth: '150px'
+            } 
+          },
+          React.createElement('label', 
+            { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+            '지사'
+          ),
+          React.createElement('select', {
+            value: filters.branchFilter || '',
+            onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('branchFilter', e.target.value || null),
+            style: {
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '13px'
+            }
+          },
+            React.createElement('option', { value: '' }, '전체'),
+            ...(options?.branches || []).map(branch =>
+              React.createElement('option', { key: branch, value: branch }, branch)
+            )
           )
+        ),
+
+        // 지점 필터 - 지점장에게는 숨김
+        !isBranchManager && React.createElement('div', 
+          { 
+            style: { 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '4px',
+              minWidth: '150px'
+            } 
+          },
+          React.createElement('label', 
+            { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+            '지점'
+          ),
+          React.createElement('select', {
+            value: filters.officeFilter || '',
+            onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('officeFilter', e.target.value || null),
+            style: {
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '13px'
+            }
+          },
+            React.createElement('option', { value: '' }, '전체'),
+            ...(options?.offices || [])
+              .filter(office => !filters.branchFilter || office.branchName === filters.branchFilter)
+              .map(office =>
+                React.createElement('option', { key: office.officeName, value: office.officeName }, office.officeName)
+              )
+          )
+        ),
+
+        // 담당자 필터
+        React.createElement('div', 
+          { 
+            style: { 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '4px',
+              minWidth: '200px'
+            } 
+          },
+          React.createElement('label', 
+            { style: { fontSize: '12px', fontWeight: 'bold' } }, 
+            '담당자'
+          ),
+          React.createElement('select', {
+            value: filters.managerFilter || '',
+            onChange: (e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('managerFilter', e.target.value || null),
+            style: {
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '13px'
+            }
+          },
+            React.createElement('option', { value: '' }, '전체'),
+            ...(options?.managers || [])
+              .filter(manager => {
+                if (filters.branchFilter && manager.branchName !== filters.branchFilter) return false
+                if (filters.officeFilter && manager.officeName !== filters.officeFilter) return false
+                return true
+              })
+              .map(manager =>
+                React.createElement('option', { key: manager.employeeId, value: manager.employeeId }, `${manager.employeeName} (${manager.officeName})`)
+              )
+          )
+        ),
+        
+        // 조회 버튼
+        React.createElement('button',
+          {
+            onClick: handleSearch,
+            disabled: loading,
+            style: {
+              backgroundColor: loading ? '#ccc' : '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              padding: '8px 16px',
+              minWidth: '100px',
+              height: '32px',
+              alignSelf: 'flex-end'
+            }
+          },
+          loading ? '조회중...' : '조회'
+        ),
+        
+        // 초기화 버튼
+        React.createElement('button',
+          {
+            type: 'button',
+            onClick: resetFilters,
+            disabled: loading,
+            style: {
+              backgroundColor: loading ? '#aaa' : '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '13px',
+              fontWeight: '600',
+              padding: '8px 16px',
+              alignSelf: 'flex-end'
+            }
+          },
+          '초기화'
         )
       ),
 
