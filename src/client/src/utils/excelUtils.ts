@@ -61,7 +61,6 @@ export const exportPartnersToExcel = (partners: Partner[], filename: string = '�
       count: partners.length
     }
   } catch (error) {
-    console.error('엑셀 파일 생성 실패:', error)
     return {
       success: false,
       error: '엑셀 파일 생성 중 오류가 발생했습니다.'
@@ -203,7 +202,6 @@ export const downloadPartnerTemplate = () => {
 
     return { success: true, filename: '거래처등록템플릿.xlsx' }
   } catch (error) {
-    console.error('템플릿 다운로드 실패:', error)
     return { success: false, error: '템플릿 다운로드 중 오류가 발생했습니다.' }
   }
 }

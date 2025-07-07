@@ -49,12 +49,10 @@ const isPointInPolygon = (point: [number, number], polygon: number[][]): boolean
 // 좌표 변환 함수 (다양한 형식의 좌표 데이터 처리)
 const normalizeCoordinates = (coordinates: any): number[][] => {
   if (!coordinates) {
-    console.log('🗺️ 좌표 데이터가 없음')
     return []
   }
   
   if (!Array.isArray(coordinates) || coordinates.length === 0) {
-    console.log('🗺️ 좌표 배열이 비어있거나 유효하지 않음:', coordinates)
     return []
   }
   
@@ -63,55 +61,44 @@ const normalizeCoordinates = (coordinates: any): number[][] => {
     const firstItem = coordinates[0]
     
     if (!firstItem) {
-      console.log('🗺️ 첫 번째 좌표 요소가 비어있음')
       return []
     }
     
     // 형식 1: [{lat: number, lng: number}, ...]
     if (typeof firstItem === 'object' && 'lat' in firstItem && 'lng' in firstItem) {
-      console.log('🗺️ {lat, lng} 형식 좌표 변환 시작')
       const converted = coordinates.map((coord: any) => {
         if (coord && typeof coord.lng === 'number' && typeof coord.lat === 'number') {
           return [coord.lng, coord.lat] as [number, number]
         }
-        console.warn('유효하지 않은 좌표:', coord)
         return null
       }).filter((coord): coord is [number, number] => coord !== null)
       
-      console.log('🗺️ {lat, lng} 형식 변환 완료:', converted.length, '개 좌표')
       return converted
     }
     
     // 형식 2: [[lng, lat], ...] or [lng, lat]
     if (Array.isArray(firstItem)) {
-      console.log('🗺️ [lng, lat] 배열 형식 검증 시작')
       const validated = coordinates.map((coord: any) => {
         if (Array.isArray(coord) && coord.length >= 2 && 
             typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
             !isNaN(coord[0]) && !isNaN(coord[1])) {
           return [coord[0], coord[1]] as [number, number]
         }
-        console.warn('유효하지 않은 좌표 배열:', coord)
         return null
       }).filter((coord): coord is [number, number] => coord !== null)
       
-      console.log('🗺️ [lng, lat] 배열 형식 검증 완료:', validated.length, '개 좌표')
       return validated
     }
     
     // 형식 3: 단일 좌표 쌍 [lng, lat]
     if (typeof firstItem === 'number' && coordinates.length >= 2) {
-      console.log('🗺️ 단일 좌표 쌍 [lng, lat] 형식')
       // 이 경우 전체 배열이 하나의 좌표이므로 처리할 수 없음
-      console.warn('단일 좌표는 폴리곤을 만들 수 없음')
       return []
     }
     
-    console.warn('🗺️ 알 수 없는 좌표 형식:', firstItem)
     return []
     
   } catch (error) {
-    console.error('🗺️ 좌표 변환 오류:', error)
     return []
   }
 }
@@ -167,13 +154,6 @@ const calculateMapBounds = (areas: ExtendedProcessedArea[]) => {
   else if (maxDiff > 0.2) level = 8 // 매우 작은 영역
   else level = 7                    // 아주 작은 영역
 
-  console.log('🗺️ 지도 경계 계산:', {
-    areas: areas.length,
-    bounds: { minLat, maxLat, minLng, maxLng },
-    center: { centerLat, centerLng },
-    maxDiff,
-    level
-  })
 
   return { centerLat, centerLng, level }
 }
@@ -300,7 +280,6 @@ const AreasPage = () => {
           
           // 폴리곤 유효성 검증
           if (polygon.length < 3) {
-            console.warn(`상권 ${area.name}: 폴리곤 점이 3개 미만`)
             return []
           }
           
@@ -1128,24 +1107,63 @@ const AreasPage = () => {
           React.createElement('div',
             { style: { display: 'flex', flexDirection: 'column', gap: '20px' } },
             
-            // 지도 영역 (홈화면과 동일한 방식)
+            // 지도 영역 (모달용 설정 개선)
             React.createElement('div',
               { style: { width: '100%', height: '300px', borderRadius: '8px', overflow: 'hidden', position: 'relative' } },
               selectedArea ? React.createElement(KakaoMap, {
                 key: `area-detail-map-${selectedArea.id}-${Date.now()}`, // 모달 열릴 때마다 지도 새로 생성
                 width: '100%',
                 height: '300px',
-                staticMode: true,
-                disableControls: true,
+                latitude: (() => {
+                  if (!selectedArea.coordinates || selectedArea.coordinates.length === 0) return 37.5665
+                  const coord = selectedArea.coordinates[0]
+                  if (Array.isArray(coord)) return coord[1] // [lng, lat] 형식
+                  if (typeof coord === 'object' && coord && 'lat' in coord) return (coord as any).lat
+                  return 37.5665
+                })(),
+                longitude: (() => {
+                  if (!selectedArea.coordinates || selectedArea.coordinates.length === 0) return 126.9780
+                  const coord = selectedArea.coordinates[0]
+                  if (Array.isArray(coord)) return coord[0] // [lng, lat] 형식
+                  if (typeof coord === 'object' && coord && 'lng' in coord) return (coord as any).lng
+                  return 126.9780
+                })(),
+                level: 6, // 적절한 줌 레벨 설정
+                staticMode: false, // 정적 모드 비활성화
+                disableControls: false, // 컨트롤 활성화
                 showAreaBounds: true,
                 fitBounds: true,
-                disableMarkerCentering: true,
+                disableMarkerCentering: false, // 마커 중심화 활성화
                 areas: (() => {
+                  // 상권 좌표가 있는지 확인
+                  if (!selectedArea.coordinates || !Array.isArray(selectedArea.coordinates)) {
+                    console.warn('상권 좌표 데이터가 없음:', selectedArea.coordinates)
+                    return []
+                  }
+                  
+                  // 좌표 정규화
                   const normalizedCoords = normalizeCoordinates(selectedArea.coordinates)
                   
                   if (!normalizedCoords || normalizedCoords.length < 3) {
+                    console.warn('정규화된 좌표가 부족함:', normalizedCoords?.length || 0)
                     return []
                   }
+                  
+                  console.log('모달 지도 영역 데이터:', {
+                    areaId: selectedArea.id,
+                    areaName: selectedArea.name,
+                    originalCoords: selectedArea.coordinates.length,
+                    normalizedCoords: normalizedCoords.length,
+                    color: selectedArea.color || '#667eea',
+                    sampleOriginalCoord: selectedArea.coordinates[0],
+                    sampleNormalizedCoord: normalizedCoords[0],
+                    coordBounds: {
+                      minLng: Math.min(...normalizedCoords.map(c => c[0])),
+                      maxLng: Math.max(...normalizedCoords.map(c => c[0])),
+                      minLat: Math.min(...normalizedCoords.map(c => c[1])),
+                      maxLat: Math.max(...normalizedCoords.map(c => c[1]))
+                    }
+                  })
                   
                   const areaData = {
                     id: selectedArea.id,
@@ -1160,9 +1178,15 @@ const AreasPage = () => {
                   return [areaData]
                 })(),
                 markers: (() => {
-                  if (!selectedArea.partnersInArea) {
+                  if (!selectedArea.partnersInArea || !Array.isArray(selectedArea.partnersInArea)) {
+                    console.warn('상권 내 거래처 데이터가 없음:', selectedArea.partnersInArea)
                     return []
                   }
+                  
+                  console.log('모달 지도 마커 생성 시작:', {
+                    areaId: selectedArea.id,
+                    totalPartners: selectedArea.partnersInArea.length
+                  })
                   
                   const validPartners = (selectedArea.partnersInArea as any[]).filter((partner: any) => {
                     const lat = Number(partner.latitude)
@@ -1170,8 +1194,30 @@ const AreasPage = () => {
                     const isValid = lat && lng && !isNaN(lat) && !isNaN(lng) &&
                            lat >= 33 && lat <= 43 && lng >= 124 && lng <= 132
                     
+                    if (!isValid) {
+                      console.warn('유효하지 않은 거래처 좌표:', {
+                        name: partner.partnerName,
+                        lat, lng,
+                        originalLat: partner.latitude,
+                        originalLng: partner.longitude
+                      })
+                    }
+                    
                     return isValid
                   })
+                  
+                  // 유효한 좌표 샘플 출력 (필터링 후)
+                  if (validPartners.length > 0) {
+                    console.log('유효한 거래처 좌표 샘플:', {
+                      name: validPartners[0].partnerName,
+                      lat: Number(validPartners[0].latitude),
+                      lng: Number(validPartners[0].longitude),
+                      originalLat: validPartners[0].latitude,
+                      originalLng: validPartners[0].longitude
+                    })
+                  }
+                  
+                  console.log('유효한 거래처 마커:', validPartners.length)
                   
                   const markers = validPartners.map((partner: any) => {
                     const managerColor = getManagerColor(partner.currentManagerEmployeeId)
@@ -1216,9 +1262,10 @@ const AreasPage = () => {
                     return markerData
                   })
                   
+                  console.log('생성된 마커 데이터:', markers.length, '개')
+                  
                   return markers
-                })(),
-                level: 8
+                })()
               }) : null
             ),
             

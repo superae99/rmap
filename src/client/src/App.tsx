@@ -44,7 +44,6 @@ function App() {
         setUser(userData);
         setIsAuthenticated(true);
       } catch (error) {
-        console.error('사용자 정보 로드 실패:', error);
         // 쿠키가 유효하지 않거나 없으면 인증되지 않은 상태로 설정
         setIsAuthenticated(false);
       }
@@ -71,7 +70,7 @@ function App() {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('로그아웃 요청 실패:', error);
+      // 로그아웃 요청 실패
     }
     // 쿠키는 서버에서 삭제되므로 상태만 초기화
     setIsAuthenticated(false);
@@ -128,7 +127,6 @@ function App() {
       alert('비밀번호가 성공적으로 변경되었습니다.');
       closePasswordModal();
     } catch (error: any) {
-      console.error('비밀번호 변경 실패:', error);
       setPasswordError(error.message || '비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
       setPasswordLoading(false);

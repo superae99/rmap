@@ -31,7 +31,7 @@ const PartnersPage = () => {
         setUser(userData)
         
       } catch (error) {
-        console.error('사용자 정보 로드 실패:', error)
+        // 사용자 정보 로드 실패
       }
     }
 
@@ -70,7 +70,6 @@ const PartnersPage = () => {
       }
       setHasSearched(true)
     } catch (error) {
-      console.error('거래처 데이터 로드 실패:', error)
       setPartners([])
     } finally {
       setLoading(false)

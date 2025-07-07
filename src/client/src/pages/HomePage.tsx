@@ -91,7 +91,7 @@ const HomePage = () => {
         await loadFilterOptions()
         
       } catch (error) {
-        console.error('사용자 정보 로드 실패:', error)
+        // 로그인하지 않은 상태에서는 401 오류가 정상적임 
         // 에러 발생해도 모달 표시하지 않음 (App.tsx에서 처리)
       }
     }
@@ -242,7 +242,6 @@ const HomePage = () => {
 
       
     } catch (error) {
-      console.error('데이터 로드 실패:', error)
       setPartners([])
       setAreas([])
     } finally {
@@ -392,7 +391,6 @@ const HomePage = () => {
       
       setAvailableManagers(filteredManagers)
     } catch (error) {
-      console.error('❌ 담당자 목록 로드 실패:', error)
       setAvailableManagers([])
     }
   }
@@ -486,7 +484,6 @@ const HomePage = () => {
         })
       })
     } catch (error) {
-      console.error('주소 검색 오류:', error)
       if (error instanceof Error && error.message.includes('로드 대기 시간 초과')) {
         alert('카카오맵 API 로드에 시간이 걸리고 있습니다. 잠시 후 다시 시도해주세요.')
       } else {
@@ -533,7 +530,6 @@ const HomePage = () => {
       await handleSearch()
       
     } catch (error) {
-      console.error('좌표 변경 실패:', error)
       alert('좌표 변경에 실패했습니다. 다시 시도해주세요.')
     }
   }
@@ -1370,7 +1366,6 @@ const HomePage = () => {
                   await handleSearch()
                   
                 } catch (error) {
-                  console.error('담당자 변경 실패:', error)
                   alert('담당자 변경에 실패했습니다. 다시 시도해주세요.')
                 }
               },

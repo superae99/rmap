@@ -39,22 +39,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   // Staff와 Admin은 모든 필터를 볼 수 있음 (지점장 여부와 상관없이)
   const shouldShowAllFilters = isAdmin || isStaff
 
-  // 디버깅: 권한 정보 출력 (개발 환경에서만)
-  React.useEffect(() => {
-    if (user) {
-      console.log('FilterPanel 권한 체크:', {
-        user: user.employeeName,
-        position: user.position,
-        jobTitle: user.jobTitle,
-        fieldType: user.fieldType,
-        account: user.account,
-        isAdmin,
-        isStaff,
-        isBranchManager,
-        shouldShowAllFilters
-      })
-    }
-  }, [user, isAdmin, isStaff, isBranchManager, shouldShowAllFilters])
 
   // 선택된 지사에 따른 지점 필터링
   const filteredOffices = filters.branchFilter 

@@ -85,6 +85,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   
   // 카카오맵 로딩 상태
   const [isKakaoLoaded, setIsKakaoLoaded] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   // 카카오맵 API 로드 확인
@@ -105,9 +106,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   useEffect(() => {
     if (!isKakaoLoaded) return;
 
+    // 지도 초기화 시 맵 준비 상태 리셋
+    setIsMapReady(false);
+
     const initializeMap = () => {
       if (!mapContainer.current || !window.kakao || !window.kakao.maps) {
-        console.error('카카오맵을 로드할 수 없습니다.');
         return;
       }
 
@@ -117,6 +120,11 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       };
 
       mapInstance.current = new window.kakao.maps.Map(mapContainer.current, options);
+      
+      // 지도 로드 완료 이벤트 리스너 추가
+      window.kakao.maps.event.addListener(mapInstance.current, 'tilesloaded', function() {
+        setIsMapReady(true);
+      });
       
       // 성능 최적화 설정
       if (mapInstance.current.setTileAnimation) {
@@ -148,6 +156,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       setTimeout(() => {
         if (mapInstance.current && mapInstance.current.relayout) {
           mapInstance.current.relayout();
+          
+          // 지도 리사이즈 후 강제로 영역과 마커 다시 렌더링
+          setTimeout(() => {
+            // 영역과 마커를 다시 렌더링하기 위해 상태 업데이트 트리거
+            setIsKakaoLoaded(prev => prev);
+          }, 50);
         }
       }, 100);
       
@@ -221,7 +235,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const getMarkerSizeByZoom = (zoomLevel: number) => {
     // 줌 레벨 1(가장 멀리) ~ 14(가장 가까이)
     // 줌 레벨이 낮을수록 더 작은 마커, 높을수록 더 큰 마커
-    const baseSize = 16; // 기본 크기
     const maxSize = 32;   // 최대 크기
     const minSize = 16;   // 최소 크기
     
@@ -340,9 +353,140 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     });
   };
 
-  // 마커 업데이트
+  // 영역(폴리곤) 업데이트 - 먼저 렌더링 (배경)
   useEffect(() => {
-    if (!mapInstance.current || !window.kakao || !window.kakao.maps) return;
+    if (!mapInstance.current || !window.kakao || !window.kakao.maps || !showAreaBounds || !isKakaoLoaded || !isMapReady) return;
+
+    // 기존 폴리곤 제거
+    polygonsRef.current.forEach(polygon => polygon.setMap(null));
+    polygonsRef.current = [];
+
+    // 새 폴리곤 생성
+    areas.forEach((areaData, index) => {
+      if (!areaData.coordinates || areaData.coordinates.length < 3) {
+        return
+      }
+      
+      if (index < 3) { // 처음 3개 영역만 로그
+      }
+      
+      const path = areaData.coordinates.map(coord => 
+        new window.kakao.maps.LatLng(coord[1], coord[0])
+      );
+
+      const polygon = new window.kakao.maps.Polygon({
+        map: mapInstance.current,
+        path: path,
+        strokeWeight: areaData.strokeWeight || 2,
+        strokeColor: areaData.strokeColor || areaData.color || '#004c80',
+        strokeOpacity: 0.8,
+        fillColor: areaData.color || '#004c80',
+        fillOpacity: areaData.opacity || 0.3
+      });
+
+      // 영역 클릭 이벤트
+      window.kakao.maps.event.addListener(polygon, 'click', () => {
+        if (onAreaClick) {
+          onAreaClick(areaData);
+        }
+      });
+
+      // 마우스 오버 효과 및 adm_nm 표시
+      window.kakao.maps.event.addListener(polygon, 'mouseover', () => {
+        polygon.setOptions({ fillOpacity: 0.5 });
+        
+        // adm_nm 표시 (salesTerritory 또는 properties에서 가져오기)
+        const admNm = areaData.data?.salesTerritory?.admNm || 
+                     areaData.data?.properties?.adm_nm || 
+                     areaData.name;
+        
+        // 툴팁 요소를 다시 찾거나 생성
+        let tooltipElement = areaTooltipRef.current || document.getElementById('kakao-area-tooltip') as HTMLDivElement;
+        
+        if (!tooltipElement && admNm) {
+          tooltipElement = document.createElement('div');
+          tooltipElement.id = 'kakao-area-tooltip';
+          tooltipElement.style.cssText = `
+            position: fixed;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            pointer-events: none;
+            z-index: 999999;
+            display: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          `;
+          document.body.appendChild(tooltipElement);
+          areaTooltipRef.current = tooltipElement;
+        }
+        
+        if (tooltipElement && admNm) {
+          tooltipElement.textContent = admNm;
+          tooltipElement.style.display = 'block';
+          tooltipElement.style.visibility = 'visible';
+        }
+      });
+      
+      // 전역 마우스 이동 이벤트로 툴팁 위치 업데이트
+      const handleMouseMove = (e: MouseEvent) => {
+        const tooltipElement = areaTooltipRef.current || document.getElementById('kakao-area-tooltip') as HTMLDivElement;
+        if (tooltipElement && tooltipElement.style.display === 'block') {
+          tooltipElement.style.left = `${e.clientX + 10}px`;
+          tooltipElement.style.top = `${e.clientY - 30}px`;
+        }
+      };
+      
+      document.addEventListener('mousemove', handleMouseMove);
+
+
+      window.kakao.maps.event.addListener(polygon, 'mouseout', () => {
+        polygon.setOptions({ fillOpacity: areaData.opacity || 0.3 });
+        
+        // 툴팁 숨기기
+        const tooltipElement = areaTooltipRef.current || document.getElementById('kakao-area-tooltip') as HTMLDivElement;
+        if (tooltipElement) {
+          tooltipElement.style.display = 'none';
+          tooltipElement.style.visibility = 'hidden';
+        }
+      });
+
+      polygonsRef.current.push(polygon);
+    });
+
+    // fitBounds가 활성화되고 영역이 있을 때 자동 범위 조정
+    if (fitBounds && areas.length > 0) {
+      setTimeout(() => {
+        const bounds = new window.kakao.maps.LatLngBounds();
+        let hasValidCoords = false;
+
+        areas.forEach(areaData => {
+          if (areaData.coordinates && areaData.coordinates.length > 0) {
+            areaData.coordinates.forEach(coord => {
+              bounds.extend(new window.kakao.maps.LatLng(coord[1], coord[0]));
+              hasValidCoords = true;
+            });
+          }
+        });
+
+        if (hasValidCoords) {
+          // 패딩을 줄여서 영역이 화면에 꽉 차도록 설정
+          mapInstance.current.setBounds(bounds, 10); // 최소한의 패딩만 적용
+          
+          // 추가 줌 조정 없이 setBounds가 계산한 최적 레벨 유지
+        }
+      }, 100);
+    }
+  }, [areas, showAreaBounds, onAreaClick, fitBounds, isKakaoLoaded, isMapReady]);
+
+  // 마커 업데이트 - 나중에 렌더링 (전경)
+  useEffect(() => {
+    if (!mapInstance.current || !window.kakao || !window.kakao.maps || !isKakaoLoaded || !isMapReady) return;
 
     // 기존 마커 제거
     markersRef.current.forEach(marker => marker.setMap(null));
@@ -354,7 +498,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       // 좌표 유효성 검증
       if (!markerData.latitude || !markerData.longitude || 
           isNaN(markerData.latitude) || isNaN(markerData.longitude)) {
-        console.warn(`유효하지 않은 좌표: ${markerData.id} - lat: ${markerData.latitude}, lng: ${markerData.longitude}`)
         return
       }
       
@@ -382,8 +525,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           // 디버깅: 처음 5개 마커만 로그
           if (markersRef.current.length < 5) {
           }
-        } else {
-          console.warn(`⚠️ 마커 이미지 생성 실패: ${markerData.id} - RTM: "${markerData.rtmChannel}"`)
         }
       } else {
         // 디버깅: rtmChannel이 없는 경우 로그
@@ -517,142 +658,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       markersRef.current.push(marker);
       markersDataRef.current.push(markerData); // 마커 데이터도 함께 저장
     });
-  }, [markers, onMarkerClick, onInfoWindowButtonClick]);
-
-  // 영역(폴리곤) 업데이트
-  useEffect(() => {
-    if (!mapInstance.current || !window.kakao || !window.kakao.maps || !showAreaBounds) return;
-
-    // 기존 폴리곤 제거
-    polygonsRef.current.forEach(polygon => polygon.setMap(null));
-    polygonsRef.current = [];
-
-    // 새 폴리곤 생성
-    areas.forEach((areaData, index) => {
-      if (!areaData.coordinates || areaData.coordinates.length < 3) {
-        console.warn(`❌ 영역 ${areaData.name}: 좌표 부족 (${areaData.coordinates?.length || 0}개)`)
-        return
-      }
-      
-      if (index < 3) { // 처음 3개 영역만 로그
-      }
-      
-      const path = areaData.coordinates.map(coord => 
-        new window.kakao.maps.LatLng(coord[1], coord[0])
-      );
-
-      const polygon = new window.kakao.maps.Polygon({
-        map: mapInstance.current,
-        path: path,
-        strokeWeight: areaData.strokeWeight || 2,
-        strokeColor: areaData.strokeColor || areaData.color || '#004c80',
-        strokeOpacity: 0.8,
-        fillColor: areaData.color || '#004c80',
-        fillOpacity: areaData.opacity || 0.3
-      });
-
-      // 영역 클릭 이벤트
-      window.kakao.maps.event.addListener(polygon, 'click', () => {
-        if (onAreaClick) {
-          onAreaClick(areaData);
-        }
-      });
-
-      // 마우스 오버 효과 및 adm_nm 표시
-      window.kakao.maps.event.addListener(polygon, 'mouseover', () => {
-        polygon.setOptions({ fillOpacity: 0.5 });
-        
-        // adm_nm 표시 (salesTerritory 또는 properties에서 가져오기)
-        const admNm = areaData.data?.salesTerritory?.admNm || 
-                     areaData.data?.properties?.adm_nm || 
-                     areaData.name;
-        
-        // 툴팁 요소를 다시 찾거나 생성
-        let tooltipElement = areaTooltipRef.current || document.getElementById('kakao-area-tooltip') as HTMLDivElement;
-        
-        if (!tooltipElement && admNm) {
-          tooltipElement = document.createElement('div');
-          tooltipElement.id = 'kakao-area-tooltip';
-          tooltipElement.style.cssText = `
-            position: fixed;
-            padding: 8px 12px;
-            background: rgba(255,255,255,0.95);
-            color: #333;
-            border: 1px solid rgba(0,0,0,0.1);
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            pointer-events: none;
-            z-index: 999999;
-            display: none;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          `;
-          document.body.appendChild(tooltipElement);
-          areaTooltipRef.current = tooltipElement;
-        }
-        
-        if (tooltipElement && admNm) {
-          tooltipElement.textContent = admNm;
-          tooltipElement.style.display = 'block';
-          tooltipElement.style.visibility = 'visible';
-        }
-      });
-      
-      // 전역 마우스 이동 이벤트로 툴팁 위치 업데이트
-      const handleMouseMove = (e: MouseEvent) => {
-        const tooltipElement = areaTooltipRef.current || document.getElementById('kakao-area-tooltip') as HTMLDivElement;
-        if (tooltipElement && tooltipElement.style.display === 'block') {
-          tooltipElement.style.left = `${e.clientX + 10}px`;
-          tooltipElement.style.top = `${e.clientY - 30}px`;
-        }
-      };
-      
-      document.addEventListener('mousemove', handleMouseMove);
-
-
-      window.kakao.maps.event.addListener(polygon, 'mouseout', () => {
-        polygon.setOptions({ fillOpacity: areaData.opacity || 0.3 });
-        
-        // 툴팁 숨기기
-        const tooltipElement = areaTooltipRef.current || document.getElementById('kakao-area-tooltip') as HTMLDivElement;
-        if (tooltipElement) {
-          tooltipElement.style.display = 'none';
-          tooltipElement.style.visibility = 'hidden';
-        }
-      });
-
-      polygonsRef.current.push(polygon);
-    });
-
-    // fitBounds가 활성화되고 영역이 있을 때 자동 범위 조정
-    if (fitBounds && areas.length > 0) {
-      setTimeout(() => {
-        const bounds = new window.kakao.maps.LatLngBounds();
-        let hasValidCoords = false;
-
-        areas.forEach(areaData => {
-          if (areaData.coordinates && areaData.coordinates.length > 0) {
-            areaData.coordinates.forEach(coord => {
-              bounds.extend(new window.kakao.maps.LatLng(coord[1], coord[0]));
-              hasValidCoords = true;
-            });
-          }
-        });
-
-        if (hasValidCoords) {
-          // 패딩을 줄여서 영역이 화면에 꽉 차도록 설정
-          mapInstance.current.setBounds(bounds, 10); // 최소한의 패딩만 적용
-          
-          // 추가 줌 조정 없이 setBounds가 계산한 최적 레벨 유지
-          setTimeout(() => {
-            const currentLevel = mapInstance.current.getLevel();
-          }, 200);
-        }
-      }, 100);
-    }
-  }, [areas, showAreaBounds, onAreaClick, fitBounds]);
+  }, [markers, onMarkerClick, onInfoWindowButtonClick, isKakaoLoaded, isMapReady]);
 
   // 지도 범위 조정 (새로운 마커 데이터 로드 시)
   const previousMarkersData = useRef<string>('');

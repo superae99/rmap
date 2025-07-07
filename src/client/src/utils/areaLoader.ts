@@ -86,7 +86,6 @@ export const loadAreasData = async (filters?: any): Promise<ProcessedArea[]> => 
             }
           }
         } catch (error) {
-          console.warn(`좌표 파싱 실패 for area ${area.id}:`, error)
           return null
         }
         
@@ -138,7 +137,6 @@ export const loadAreasData = async (filters?: any): Promise<ProcessedArea[]> => 
     
     return processedAreas
   } catch (error) {
-    console.error('❌ Areas 데이터 로드 실패:', error)
     return []
   }
 }
