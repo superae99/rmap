@@ -7,7 +7,7 @@
     "dev": "ts-node src/index.ts",
     "dev:watch": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node --max-old-space-size=512 dist/index.js",
     "test": "jest",
     "lint": "eslint . --ext .ts",
     "create-users": "ts-node src/scripts/create-admin.ts",
