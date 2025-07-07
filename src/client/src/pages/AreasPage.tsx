@@ -237,7 +237,14 @@ const AreasPage = () => {
     try {
       setLoading(true)
       
+      console.log('🏢 AreasPage - 검색 시작, 필터:', {
+        branchFilter: filters.branchFilter,
+        officeFilter: filters.officeFilter,
+        managerFilter: filters.managerFilter
+      })
+      
       // 거래처와 상권 데이터를 병렬로 로드
+      console.log('🏢 AreasPage - API 호출 시작...')
       const [partnersResponse, areasData] = await Promise.all([
         partnerAPI.getPartners({
           limit: 100000,
@@ -247,6 +254,7 @@ const AreasPage = () => {
         }),
         loadAreasData(filters)
       ])
+      console.log('🏢 AreasPage - API 호출 완료')
       
       console.log('🏢 AreasPage - 원본 거래처 응답:', partnersResponse)
       
@@ -520,7 +528,10 @@ const AreasPage = () => {
       setHasSearched(true)
       
     } catch (error) {
-      console.error('데이터 로드 실패:', error)
+      console.error('🏢 AreasPage - 데이터 로드 실패:', error)
+      if (error instanceof Error) {
+        console.error('🏢 AreasPage - 에러 스택:', error.stack)
+      }
       setPartners([])
       setAreas([])
     } finally {
