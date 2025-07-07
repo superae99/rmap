@@ -295,8 +295,8 @@ const AreasPage = () => {
       })
 
       // 각 상권에 포함되는 거래처들 찾기
-      const findPartnersInArea = (area: any): Partner[] => {
-        console.log(`🏢 AreasPage - ${area.name} 상권 분석 시작 - 전체 거래처 ${partners.length}개`)
+      const findPartnersInArea = (area: any, partnersArray: Partner[]): Partner[] => {
+        console.log(`🏢 AreasPage - ${area.name} 상권 분석 시작 - 전체 거래처 ${partnersArray.length}개`)
         
         if (!area.coordinates || !Array.isArray(area.coordinates) || area.coordinates.length < 3) {
           console.warn(`상권 ${area.name}: 유효하지 않은 좌표 데이터`)
@@ -339,7 +339,7 @@ const AreasPage = () => {
         }
 
         // 거래처 필터링 (좌표 유효성 검증 포함)
-        const validPartners = partners.filter(partner => {
+        const validPartners = partnersArray.filter(partner => {
           const lat = Number(partner.latitude)
           const lng = Number(partner.longitude)
           
@@ -361,7 +361,7 @@ const AreasPage = () => {
           return true
         })
         
-        console.log(`상권 ${area.name}: 전체 거래처 ${partners.length}개 → 유효 거래처 ${validPartners.length}개`)
+        console.log(`상권 ${area.name}: 전체 거래처 ${partnersArray.length}개 → 유효 거래처 ${validPartners.length}개`)
 
         // Point-in-Polygon 검사
         const partnersInArea = validPartners.filter(partner => {
@@ -383,13 +383,13 @@ const AreasPage = () => {
       // 지도용 데이터 변환
       const mapAreasData = areasData.map(area => {
         // 상권 내 거래처들 찾기
-        const partnersInArea = partners.length > 0 ? findPartnersInArea(area) : []
+        const partnersInArea = validPartners.length > 0 ? findPartnersInArea(area, validPartners) : []
         
         // 디버깅 정보 출력 (첫 3개 상권만)
         if (areasData.indexOf(area) < 3) {
           console.log(`🔍 상권 "${area.name}" 상세 분석:`, {
-            totalPartners: partners.length,
-            validPartners: partners.filter(p => {
+            totalPartners: validPartners.length,
+            validPartners: validPartners.filter(p => {
               const lat = Number(p.latitude)
               const lng = Number(p.longitude)
               return lat !== 0 || lng !== 0
@@ -402,7 +402,7 @@ const AreasPage = () => {
               lat: p.latitude,
               lng: p.longitude
             })),
-            invalidCoords: partners.filter(p => {
+            invalidCoords: validPartners.filter(p => {
               const lat = Number(p.latitude)
               const lng = Number(p.longitude)
               return lat === 0 && lng === 0
