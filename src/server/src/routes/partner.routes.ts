@@ -7,7 +7,8 @@ import {
   updatePartner, 
   deletePartner,
   bulkUploadPartners,
-  getFilterOptions
+  getFilterOptions,
+  updatePartnerCoordinates
 } from '../controllers/partner.controller'
 
 const router = Router()
@@ -24,6 +25,9 @@ router.get('/:partnerCode', authorize('admin', 'staff', 'manager', 'user'), getP
 router.post('/', authorize('manager', 'admin'), createPartner)
 router.put('/:partnerCode', authorize('manager', 'admin'), updatePartner)
 router.delete('/:partnerCode', authorize('admin'), deletePartner)
+
+// 좌표 업데이트 (특별 엔드포인트)
+router.put('/:partnerCode/coordinates', authorize('admin', 'staff', 'manager', 'user'), updatePartnerCoordinates)
 
 // 일괄 업로드
 router.post('/bulk', authorize('manager', 'admin'), bulkUploadPartners)

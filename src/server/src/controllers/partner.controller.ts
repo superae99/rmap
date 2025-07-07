@@ -562,3 +562,80 @@ export const getFilterOptions = async (req: Request & { user?: any }, res: Respo
     res.status(500).json({ message: '서버 오류가 발생했습니다.' })
   }
 }
+
+// 거래처 좌표 업데이트
+export const updatePartnerCoordinates = async (req: Request & { user?: any }, res: Response) => {
+  try {
+    const { partnerCode } = req.params
+    const { latitude, longitude } = req.body
+
+    // 입력 유효성 검사
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        success: false,
+        message: '위도와 경도가 필요합니다.'
+      })
+    }
+
+    // 좌표 유효성 검사
+    const lat = parseFloat(latitude)
+    const lng = parseFloat(longitude)
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({
+        success: false,
+        message: '유효한 좌표 값이 아닙니다.'
+      })
+    }
+
+    // 한국 영역 내 좌표인지 확인
+    if (lat < 33 || lat > 43 || lng < 124 || lng > 132) {
+      return res.status(400).json({
+        success: false,
+        message: '한국 영역 내의 좌표여야 합니다.'
+      })
+    }
+
+    // 거래처 찾기
+    const partner = await partnerRepository.findOne({
+      where: { partnerCode }
+    })
+
+    if (!partner) {
+      return res.status(404).json({
+        success: false,
+        message: '거래처를 찾을 수 없습니다.'
+      })
+    }
+
+    // 권한 체크 (필요한 경우)
+    // 현재는 모든 사용자가 좌표 변경 가능하도록 설정
+    // 추후 필요에 따라 권한 체크 로직 추가 가능
+
+    // 좌표 업데이트
+    await partnerRepository.update(partnerCode, {
+      latitude: lat,
+      longitude: lng,
+      updatedAt: new Date()
+    })
+
+    console.log(`거래처 좌표 변경: ${partnerCode} -> ${lat}, ${lng} (변경자: ${req.user?.employeeName || 'Unknown'})`)
+
+    res.json({
+      success: true,
+      message: '좌표가 성공적으로 변경되었습니다.',
+      data: {
+        partnerCode,
+        latitude: lat,
+        longitude: lng
+      }
+    })
+
+  } catch (error) {
+    console.error('좌표 변경 오류:', error)
+    res.status(500).json({
+      success: false,
+      message: '서버 오류가 발생했습니다.'
+    })
+  }
+}

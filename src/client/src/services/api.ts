@@ -178,6 +178,17 @@ export const partnerAPI = {
       }),
     })
   },
+
+  // 좌표 변경
+  updatePartnerCoordinates: async (partnerCode: string, coordinateData: {
+    latitude: number
+    longitude: number
+  }) => {
+    return apiRequest(`/partners/${partnerCode}/coordinates`, {
+      method: 'PUT',
+      body: JSON.stringify(coordinateData),
+    })
+  },
 }
 
 // 영역 API

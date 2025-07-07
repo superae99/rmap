@@ -54,6 +54,20 @@ const HomePage = () => {
   const [showAllManagers, setShowAllManagers] = useState(false)
   const [customManagerColors, setCustomManagerColors] = useState<{[key: string]: string}>({})
   const [user, setUser] = useState<any>(null)
+  
+  // 좌표 변경 모달 관련 상태
+  const [showCoordinateChangeModal, setShowCoordinateChangeModal] = useState(false)
+  const [coordinateChangeInfo, setCoordinateChangeInfo] = useState({
+    address: '',
+    latitude: '',
+    longitude: '',
+    searchResults: [] as Array<{
+      address: string
+      lat: number
+      lng: number
+      roadAddress?: string
+    }>
+  })
 
   // RTM 채널 필터 상태 (기본적으로 모든 채널 표시)
   const [rtmChannelFilters, setRtmChannelFilters] = useState({
@@ -423,6 +437,100 @@ const HomePage = () => {
       
       setShowManagerChangeModal(true)
     } else {
+    }
+  }
+
+  // 좌표 변경 모달 열기
+  const handleCoordinateChangeClick = () => {
+    if (selectedPartner) {
+      setCoordinateChangeInfo({
+        address: selectedPartner.businessAddress || '',
+        latitude: selectedPartner.latitude?.toString() || '',
+        longitude: selectedPartner.longitude?.toString() || '',
+        searchResults: []
+      })
+      setShowManagerChangeModal(false)
+      setShowCoordinateChangeModal(true)
+    }
+  }
+
+  // 카카오맵 주소 검색
+  const searchAddress = async (address: string) => {
+    if (!address.trim()) {
+      alert('주소를 입력해주세요.')
+      return
+    }
+
+    try {
+      // 카카오맵 주소 검색 API 사용
+      const geocoder = new (window as any).kakao.maps.services.Geocoder()
+      
+      await new Promise((resolve, reject) => {
+        geocoder.addressSearch(address, (result: any, status: any) => {
+          if (status === (window as any).kakao.maps.services.Status.OK) {
+            const searchResults = result.map((item: any) => ({
+              address: item.address_name,
+              roadAddress: item.road_address?.address_name,
+              lat: parseFloat(item.y),
+              lng: parseFloat(item.x)
+            }))
+            
+            setCoordinateChangeInfo(prev => ({
+              ...prev,
+              searchResults
+            }))
+            resolve(searchResults)
+          } else {
+            reject(new Error('주소 검색에 실패했습니다.'))
+          }
+        })
+      })
+    } catch (error) {
+      console.error('주소 검색 오류:', error)
+      alert('주소 검색에 실패했습니다. 다시 시도해주세요.')
+    }
+  }
+
+  // 좌표 선택
+  const selectCoordinates = (result: any) => {
+    setCoordinateChangeInfo(prev => ({
+      ...prev,
+      latitude: result.lat.toString(),
+      longitude: result.lng.toString()
+    }))
+  }
+
+  // 좌표 업데이트 실행
+  const updateCoordinates = async () => {
+    if (!selectedPartner || !coordinateChangeInfo.latitude || !coordinateChangeInfo.longitude) {
+      alert('좌표를 선택해주세요.')
+      return
+    }
+
+    try {
+      // 거래처 좌표 업데이트 API 호출
+      await partnerAPI.updatePartnerCoordinates(selectedPartner.partnerCode, {
+        latitude: parseFloat(coordinateChangeInfo.latitude),
+        longitude: parseFloat(coordinateChangeInfo.longitude)
+      })
+
+      alert(`좌표가 성공적으로 변경되었습니다.\n거래처: ${selectedPartner.partnerName}\n새 좌표: ${coordinateChangeInfo.latitude}, ${coordinateChangeInfo.longitude}`)
+      
+      // 모달 닫기 및 폼 초기화
+      setShowCoordinateChangeModal(false)
+      setCoordinateChangeInfo({
+        address: '',
+        latitude: '',
+        longitude: '',
+        searchResults: []
+      })
+      
+      // 데이터 새로고침 (검색 다시 실행)
+      await handleSearch()
+      
+    } catch (error) {
+      console.error('좌표 변경 실패:', error)
+      alert('좌표 변경에 실패했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -1194,24 +1302,44 @@ const HomePage = () => {
           )
         ),
         React.createElement('div',
-          { style: { display: 'flex', gap: '10px', justifyContent: 'flex-end' } },
+          { style: { display: 'flex', gap: '10px', justifyContent: 'space-between' } },
+          // 좌표 변경 버튼 (왼쪽)
           React.createElement('button',
             {
-              onClick: () => {
-                setShowManagerChangeModal(false)
-                setNewManagerInfo({ employeeId: '', name: '', reason: '' })
-              },
+              onClick: handleCoordinateChangeClick,
               style: {
                 padding: '10px 20px',
-                border: '1px solid #ddd',
-                backgroundColor: '#f8f9fa',
+                border: '1px solid #ff9800',
+                backgroundColor: '#fff3e0',
+                color: '#ff9800',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: '14px',
+                fontWeight: 'bold'
               }
             },
-            '취소'
+            '좌표 변경'
           ),
+          // 오른쪽 버튼들
+          React.createElement('div',
+            { style: { display: 'flex', gap: '10px' } },
+            React.createElement('button',
+              {
+                onClick: () => {
+                  setShowManagerChangeModal(false)
+                  setNewManagerInfo({ employeeId: '', name: '', reason: '' })
+                },
+                style: {
+                  padding: '10px 20px',
+                  border: '1px solid #ddd',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }
+              },
+              '취소'
+            ),
           React.createElement('button',
             {
               onClick: async () => {
@@ -1254,6 +1382,209 @@ const HomePage = () => {
               }
             },
             '변경'
+          )
+          )
+        )
+      )
+    ),
+
+    // 좌표 변경 모달
+    showCoordinateChangeModal && React.createElement('div',
+      {
+        style: {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        },
+        onClick: () => setShowCoordinateChangeModal(false)
+      },
+      React.createElement('div',
+        {
+          style: {
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '12px',
+            minWidth: '600px',
+            maxWidth: '700px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+          },
+          onClick: (e: any) => e.stopPropagation()
+        },
+        React.createElement('h3', 
+          { style: { margin: '0 0 20px 0', fontSize: '20px', color: '#333' } }, 
+          '좌표 변경'
+        ),
+        
+        // 거래처 정보
+        React.createElement('div',
+          { style: { marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' } },
+          React.createElement('div', { style: { fontSize: '14px', color: '#666', marginBottom: '5px' } }, '거래처 정보'),
+          React.createElement('div', { style: { fontSize: '16px', fontWeight: 'bold', color: '#333' } }, 
+            selectedPartner?.partnerName || ''
+          ),
+          React.createElement('div', { style: { fontSize: '14px', color: '#666', marginTop: '5px' } }, 
+            `코드: ${selectedPartner?.partnerCode || ''} | 현재 주소: ${selectedPartner?.businessAddress || '정보없음'}`
+          ),
+          React.createElement('div', { style: { fontSize: '14px', color: '#666', marginTop: '5px' } }, 
+            `현재 좌표: ${coordinateChangeInfo.latitude || '정보없음'}, ${coordinateChangeInfo.longitude || '정보없음'}`
+          )
+        ),
+
+        // 주소 검색
+        React.createElement('div',
+          { style: { marginBottom: '20px' } },
+          React.createElement('label', 
+            { style: { display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' } },
+            '주소 검색'
+          ),
+          React.createElement('div',
+            { style: { display: 'flex', gap: '10px' } },
+            React.createElement('input',
+              {
+                type: 'text',
+                value: coordinateChangeInfo.address,
+                onChange: (e: any) => setCoordinateChangeInfo(prev => ({ ...prev, address: e.target.value })),
+                placeholder: '검색할 주소를 입력하세요',
+                style: {
+                  flex: 1,
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px'
+                },
+                onKeyPress: (e: any) => {
+                  if (e.key === 'Enter') {
+                    searchAddress(coordinateChangeInfo.address)
+                  }
+                }
+              }
+            ),
+            React.createElement('button',
+              {
+                onClick: () => searchAddress(coordinateChangeInfo.address),
+                style: {
+                  padding: '10px 20px',
+                  backgroundColor: '#4caf50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }
+              },
+              '검색'
+            )
+          )
+        ),
+
+        // 검색 결과
+        coordinateChangeInfo.searchResults.length > 0 && React.createElement('div',
+          { style: { marginBottom: '20px' } },
+          React.createElement('label', 
+            { style: { display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' } },
+            '검색 결과 (클릭하여 선택)'
+          ),
+          React.createElement('div',
+            { style: { maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '6px' } },
+            ...coordinateChangeInfo.searchResults.map((result, index) =>
+              React.createElement('div',
+                {
+                  key: index,
+                  onClick: () => selectCoordinates(result),
+                  style: {
+                    padding: '12px',
+                    borderBottom: index < coordinateChangeInfo.searchResults.length - 1 ? '1px solid #eee' : 'none',
+                    cursor: 'pointer',
+                    backgroundColor: 
+                      coordinateChangeInfo.latitude === result.lat.toString() && 
+                      coordinateChangeInfo.longitude === result.lng.toString() ? '#e3f2fd' : 'white',
+                    transition: 'background-color 0.2s'
+                  },
+                  onMouseEnter: (e: any) => {
+                    if (coordinateChangeInfo.latitude !== result.lat.toString() || 
+                        coordinateChangeInfo.longitude !== result.lng.toString()) {
+                      e.target.style.backgroundColor = '#f5f5f5'
+                    }
+                  },
+                  onMouseLeave: (e: any) => {
+                    if (coordinateChangeInfo.latitude !== result.lat.toString() || 
+                        coordinateChangeInfo.longitude !== result.lng.toString()) {
+                      e.target.style.backgroundColor = 'white'
+                    }
+                  }
+                },
+                React.createElement('div', { style: { fontWeight: 'bold', fontSize: '14px' } }, result.address),
+                result.roadAddress && React.createElement('div', 
+                  { style: { fontSize: '12px', color: '#666', marginTop: '2px' } }, 
+                  `도로명: ${result.roadAddress}`
+                ),
+                React.createElement('div', 
+                  { style: { fontSize: '12px', color: '#999', marginTop: '2px' } }, 
+                  `좌표: ${result.lat}, ${result.lng}`
+                )
+              )
+            )
+          )
+        ),
+
+        // 선택된 좌표 표시
+        (coordinateChangeInfo.latitude && coordinateChangeInfo.longitude) && React.createElement('div',
+          { style: { marginBottom: '20px', padding: '10px', backgroundColor: '#e8f5e8', borderRadius: '6px' } },
+          React.createElement('div', { style: { fontSize: '14px', fontWeight: 'bold', color: '#333' } }, '선택된 좌표'),
+          React.createElement('div', { style: { fontSize: '14px', color: '#666', marginTop: '5px' } }, 
+            `위도: ${coordinateChangeInfo.latitude}, 경도: ${coordinateChangeInfo.longitude}`
+          )
+        ),
+
+        // 버튼들
+        React.createElement('div',
+          { style: { display: 'flex', gap: '10px', justifyContent: 'flex-end' } },
+          React.createElement('button',
+            {
+              onClick: () => {
+                setShowCoordinateChangeModal(false)
+                setCoordinateChangeInfo({
+                  address: '',
+                  latitude: '',
+                  longitude: '',
+                  searchResults: []
+                })
+              },
+              style: {
+                padding: '10px 20px',
+                border: '1px solid #ddd',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }
+            },
+            '취소'
+          ),
+          React.createElement('button',
+            {
+              onClick: updateCoordinates,
+              disabled: !coordinateChangeInfo.latitude || !coordinateChangeInfo.longitude,
+              style: {
+                padding: '10px 20px',
+                border: 'none',
+                backgroundColor: (!coordinateChangeInfo.latitude || !coordinateChangeInfo.longitude) ? '#ccc' : '#ff9800',
+                color: 'white',
+                borderRadius: '6px',
+                cursor: (!coordinateChangeInfo.latitude || !coordinateChangeInfo.longitude) ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }
+            },
+            '좌표 변경'
           )
         )
       )
