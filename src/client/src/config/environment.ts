@@ -2,7 +2,7 @@
 
 export const config = {
   // API Base URL - will be different for each environment
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5001/api'),
   
   // Kakao Map API Key (deprecated - now handled by server)
   kakaoApiKey: import.meta.env.VITE_KAKAO_API_KEY || '',
