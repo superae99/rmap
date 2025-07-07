@@ -516,9 +516,6 @@ const AreasPage = () => {
 
   // 상권 상세보기 (홈화면과 동일한 방식)
   const handleAreaDetail = (area: ExtendedProcessedArea) => {
-    console.log('🗺️ 상권 상세 모달 열기:', area)
-    console.log('🗺️ 영역 좌표:', area.coordinates)
-    console.log('🗺️ 영역 내 거래처:', area.partnersInArea)
     setSelectedArea(area)
     setModalType('detail')
     setShowModal(true)
@@ -1145,11 +1142,8 @@ const AreasPage = () => {
                 disableMarkerCentering: true,
                 areas: (() => {
                   const normalizedCoords = normalizeCoordinates(selectedArea.coordinates)
-                  console.log('🗺️ 선택된 상권 원본 좌표:', selectedArea.coordinates)
-                  console.log('🗺️ 정규화된 좌표:', normalizedCoords)
                   
                   if (!normalizedCoords || normalizedCoords.length < 3) {
-                    console.error('🗺️ 유효하진 않은 좌표 데이터 - 폴리곤을 그릴 수 없음')
                     return []
                   }
                   
@@ -1163,16 +1157,12 @@ const AreasPage = () => {
                     opacity: selectedArea.fillOpacity || 0.3,
                     data: { salesTerritory: selectedArea.salesTerritory, properties: selectedArea.properties }
                   }
-                  console.log('🗺️ KakaoMap에 전달할 영역 데이터:', areaData)
                   return [areaData]
                 })(),
                 markers: (() => {
                   if (!selectedArea.partnersInArea) {
-                    console.log('🗺️ 영역 내 거래처 데이터 없음')
                     return []
                   }
-                  
-                  console.log('🗺️ 전체 거래처 수:', selectedArea.partnersInArea.length)
                   
                   const validPartners = (selectedArea.partnersInArea as any[]).filter((partner: any) => {
                     const lat = Number(partner.latitude)
@@ -1180,15 +1170,10 @@ const AreasPage = () => {
                     const isValid = lat && lng && !isNaN(lat) && !isNaN(lng) &&
                            lat >= 33 && lat <= 43 && lng >= 124 && lng <= 132
                     
-                    if (!isValid) {
-                      console.log('🗺️ 유효하지 않은 좌표:', partner.partnerCode, lat, lng)
-                    }
                     return isValid
                   })
                   
-                  console.log('🗺️ 유효한 거래처 수:', validPartners.length)
-                  
-                  const markers = validPartners.map((partner: any, index: number) => {
+                  const markers = validPartners.map((partner: any) => {
                     const managerColor = getManagerColor(partner.currentManagerEmployeeId)
                     const lat = Number(partner.latitude)
                     const lng = Number(partner.longitude)
@@ -1228,14 +1213,9 @@ const AreasPage = () => {
                         `
                     }
                     
-                    if (index < 3) {
-                      console.log(`🗺️ 마커 ${index + 1}:`, markerData)
-                    }
-                    
                     return markerData
                   })
                   
-                  console.log('🗺️ KakaoMap에 전달할 마커 수:', markers.length)
                   return markers
                 })(),
                 level: 8
