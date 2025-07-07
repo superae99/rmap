@@ -454,6 +454,32 @@ const HomePage = () => {
     }
   }
 
+  // 카카오맵 API 로드 대기 함수
+  const waitForKakaoMapsAPI = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0
+      const maxAttempts = 30 // 3초 대기 (100ms * 30)
+      
+      const checkAPI = () => {
+        attempts++
+        
+        if ((window as any).kakao && (window as any).kakao.maps && (window as any).kakao.maps.services) {
+          resolve()
+          return
+        }
+        
+        if (attempts >= maxAttempts) {
+          reject(new Error('카카오맵 API 로드 대기 시간 초과'))
+          return
+        }
+        
+        setTimeout(checkAPI, 100)
+      }
+      
+      checkAPI()
+    })
+  }
+
   // 카카오맵 주소 검색
   const searchAddress = async (address: string) => {
     if (!address.trim()) {
@@ -462,6 +488,9 @@ const HomePage = () => {
     }
 
     try {
+      // 카카오맵 API 로드 대기
+      await waitForKakaoMapsAPI()
+
       // 카카오맵 주소 검색 API 사용
       const geocoder = new (window as any).kakao.maps.services.Geocoder()
       
@@ -487,7 +516,11 @@ const HomePage = () => {
       })
     } catch (error) {
       console.error('주소 검색 오류:', error)
-      alert('주소 검색에 실패했습니다. 다시 시도해주세요.')
+      if (error instanceof Error && error.message.includes('로드 대기 시간 초과')) {
+        alert('카카오맵 API 로드에 시간이 걸리고 있습니다. 잠시 후 다시 시도해주세요.')
+      } else {
+        alert('주소 검색에 실패했습니다. 다시 시도해주세요.')
+      }
     }
   }
 

@@ -16,7 +16,7 @@ const loadKakaoMapScript = (): Promise<void> => {
     // 카카오맵 스크립트를 동기적으로 로드
     const script = document.createElement('script')
     script.type = 'text/javascript'
-    script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=dba0d31ab76b6914810ca4df710daf80&autoload=false'
+    script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=dba0d31ab76b6914810ca4df710daf80&autoload=false&libraries=services'
     
     script.onload = () => {
       // 카카오 객체 확인 후 지도 라이브러리 로드
