@@ -372,27 +372,25 @@ const getFilterOptions = async (req, res) => {
         let branches = [];
         let offices = [];
         let managers = [];
-        // admin/staff 계정: 실제 거래처 데이터가 있는 모든 필터 옵션 제공
+        // admin/staff 계정: 모든 필터 옵션 제공 (거래처 담당 여부와 무관)
         if (userAccount === 'admin' || userJobTitle.includes('시스템관리자') ||
             userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭') {
-            // 지사 목록 (실제 거래처가 있는 지사만)
+            // 지사 목록 (모든 활성 사용자의 지사)
             const branchData = await userRepository
                 .createQueryBuilder('user')
-                .innerJoin(Partner_1.Partner, 'partner', 'partner.currentManagerEmployeeId = user.employeeId')
                 .select('DISTINCT user.branchName', 'branchName')
                 .where('user.branchName IS NOT NULL')
-                .andWhere('partner.isActive = :isActive', { isActive: true })
+                .andWhere('user.isActive = :isActive', { isActive: true })
                 .orderBy('user.branchName')
                 .getRawMany();
             branches = branchData.map(b => b.branchName);
-            // 지점 목록 (실제 거래처가 있는 지점만, 지사별로 그룹화)
+            // 지점 목록 (모든 활성 사용자의 지점, 지사별로 그룹화)
             const officeData = await userRepository
                 .createQueryBuilder('user')
-                .innerJoin(Partner_1.Partner, 'partner', 'partner.currentManagerEmployeeId = user.employeeId')
                 .select(['user.officeName', 'user.branchName'])
                 .where('user.officeName IS NOT NULL')
                 .andWhere('user.branchName IS NOT NULL')
-                .andWhere('partner.isActive = :isActive', { isActive: true })
+                .andWhere('user.isActive = :isActive', { isActive: true })
                 .groupBy('user.officeName')
                 .addGroupBy('user.branchName')
                 .orderBy('user.branchName')
@@ -402,19 +400,13 @@ const getFilterOptions = async (req, res) => {
                 officeName: item.user_officeName,
                 branchName: item.user_branchName
             }));
-            // 담당자 목록 (실제 거래처가 있는 담당자만, 지점장 제외)
+            // 담당자 목록 (모든 활성 사용자, 지점장 제외)
             managers = await userRepository
                 .createQueryBuilder('user')
-                .innerJoin(Partner_1.Partner, 'partner', 'partner.currentManagerEmployeeId = user.employeeId')
                 .select(['user.employeeId', 'user.employeeName', 'user.branchName', 'user.officeName'])
                 .where('user.isActive = :isActive', { isActive: true })
-                .andWhere('partner.isActive = :isActive', { isActive: true })
                 .andWhere('user.position NOT LIKE :position', { position: '%지점장%' })
                 .andWhere('user.jobTitle NOT LIKE :jobTitle', { jobTitle: '%지점장%' })
-                .groupBy('user.employeeId')
-                .addGroupBy('user.employeeName')
-                .addGroupBy('user.branchName')
-                .addGroupBy('user.officeName')
                 .orderBy('user.branchName')
                 .addOrderBy('user.officeName')
                 .addOrderBy('user.employeeName')
