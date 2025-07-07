@@ -929,17 +929,18 @@ const AreasPage = () => {
                   style: {
                     width: '100%',
                     height: '60px',
-                    backgroundColor: area.color || '#f5f5f5',
-                    borderRadius: '6px',
+                    backgroundColor: '#667eea',
+                    borderRadius: '8px',
                     marginBottom: '15px',
-                    border: `2px solid ${area.strokeColor || area.color || '#ddd'}`,
+                    border: '1px solid rgba(102, 126, 234, 0.2)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    fontWeight: 'bold',
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
-                    fontSize: '18px'
+                    fontWeight: '600',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    fontSize: '16px',
+                    letterSpacing: '-0.02em'
                   }
                 },
                 area.name
