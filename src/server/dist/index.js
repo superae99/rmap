@@ -35,8 +35,10 @@ const allowedOrigins = [
     'http://localhost:4000', // Client dev server
     'http://localhost:4001', // Client dev server (alternative port)
     'http://localhost:5173', // Vite dev server
-    'https://r0map.netlify.app', // Production Netlify URL (hardcoded)
-    process.env.CORS_ORIGIN, // Production Netlify URL (from env)
+    'https://rtmarket.store', // Production domain
+    'https://www.rtmarket.store', // Production domain with www
+    'https://r0map.netlify.app', // Legacy Netlify URL (for transition period)
+    process.env.CORS_ORIGIN, // Production URL (from env)
 ].filter(Boolean);
 console.log('🌐 Allowed CORS origins:', allowedOrigins);
 app.use((0, cors_1.default)({

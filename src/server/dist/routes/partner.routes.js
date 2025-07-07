@@ -14,6 +14,8 @@ router.get('/:partnerCode', (0, auth_middleware_1.authorize)('admin', 'staff', '
 router.post('/', (0, auth_middleware_1.authorize)('manager', 'admin'), partner_controller_1.createPartner);
 router.put('/:partnerCode', (0, auth_middleware_1.authorize)('manager', 'admin'), partner_controller_1.updatePartner);
 router.delete('/:partnerCode', (0, auth_middleware_1.authorize)('admin'), partner_controller_1.deletePartner);
+// 좌표 업데이트 (특별 엔드포인트)
+router.put('/:partnerCode/coordinates', (0, auth_middleware_1.authorize)('admin', 'staff', 'manager', 'user'), partner_controller_1.updatePartnerCoordinates);
 // 일괄 업로드
 router.post('/bulk', (0, auth_middleware_1.authorize)('manager', 'admin'), partner_controller_1.bulkUploadPartners);
 exports.default = router;

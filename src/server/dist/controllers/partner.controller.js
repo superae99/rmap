@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFilterOptions = exports.bulkUploadPartners = exports.deletePartner = exports.updatePartner = exports.createPartner = exports.getPartner = exports.getPartners = void 0;
+exports.updatePartnerCoordinates = exports.getFilterOptions = exports.bulkUploadPartners = exports.deletePartner = exports.updatePartner = exports.createPartner = exports.getPartner = exports.getPartners = void 0;
 const database_1 = require("../config/database");
 const Partner_1 = require("../models/Partner");
 const User_1 = require("../models/User");
@@ -26,17 +26,8 @@ const getPartners = async (req, res) => {
             const userJobTitle = req.user.jobTitle || '';
             const userAccount = req.user.account || '';
             const userFieldType = req.user.fieldType || '';
-            // 디버깅: 파트너 조회 권한 체크
             const isAdminStaff = userAccount === 'admin' || userJobTitle.includes('시스템관리자') ||
                 userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭';
-            console.log('🔍 getPartners - 권한 체크:', {
-                account: userAccount,
-                position: userPosition,
-                jobTitle: userJobTitle,
-                fieldType: userFieldType,
-                isAdminStaff,
-                filters: { branchFilter, officeFilter, managerFilter }
-            });
             // admin/staff 계정: 모든 필터 사용 가능
             if (isAdminStaff) {
                 // 지사 필터 적용
@@ -377,15 +368,6 @@ const getFilterOptions = async (req, res) => {
         const userJobTitle = req.user.jobTitle || '';
         const userAccount = req.user.account || '';
         const userFieldType = req.user.fieldType || '';
-        // 디버깅: 사용자 권한 정보 로그
-        console.log('🔍 getFilterOptions - 사용자 권한 체크:', {
-            account: userAccount,
-            position: userPosition,
-            jobTitle: userJobTitle,
-            fieldType: userFieldType,
-            isAdmin: userAccount === 'admin' || userJobTitle.includes('시스템관리자'),
-            isStaff: userPosition.includes('스탭') || userJobTitle.includes('스탭') || userFieldType === '스탭'
-        });
         const userRepository = database_1.AppDataSource.getRepository(User_1.User);
         let branches = [];
         let offices = [];
@@ -483,11 +465,6 @@ const getFilterOptions = async (req, res) => {
             branchName: m.branchName,
             officeName: m.officeName
         }));
-        console.log(`🎯 실제 거래처 데이터가 있는 필터 옵션 조회 완료:`, {
-            branches: branches.length,
-            offices: offices.length,
-            managers: managersData.length
-        });
         res.json({
             branches,
             offices,
@@ -500,4 +477,71 @@ const getFilterOptions = async (req, res) => {
     }
 };
 exports.getFilterOptions = getFilterOptions;
+// 거래처 좌표 업데이트
+const updatePartnerCoordinates = async (req, res) => {
+    try {
+        const { partnerCode } = req.params;
+        const { latitude, longitude } = req.body;
+        // 입력 유효성 검사
+        if (!latitude || !longitude) {
+            return res.status(400).json({
+                success: false,
+                message: '위도와 경도가 필요합니다.'
+            });
+        }
+        // 좌표 유효성 검사
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+        if (isNaN(lat) || isNaN(lng)) {
+            return res.status(400).json({
+                success: false,
+                message: '유효한 좌표 값이 아닙니다.'
+            });
+        }
+        // 한국 영역 내 좌표인지 확인
+        if (lat < 33 || lat > 43 || lng < 124 || lng > 132) {
+            return res.status(400).json({
+                success: false,
+                message: '한국 영역 내의 좌표여야 합니다.'
+            });
+        }
+        // 거래처 찾기
+        const partner = await partnerRepository.findOne({
+            where: { partnerCode }
+        });
+        if (!partner) {
+            return res.status(404).json({
+                success: false,
+                message: '거래처를 찾을 수 없습니다.'
+            });
+        }
+        // 권한 체크 (필요한 경우)
+        // 현재는 모든 사용자가 좌표 변경 가능하도록 설정
+        // 추후 필요에 따라 권한 체크 로직 추가 가능
+        // 좌표 업데이트
+        await partnerRepository.update(partnerCode, {
+            latitude: lat,
+            longitude: lng,
+            updatedAt: new Date()
+        });
+        console.log(`거래처 좌표 변경: ${partnerCode} -> ${lat}, ${lng} (변경자: ${req.user?.employeeName || 'Unknown'})`);
+        res.json({
+            success: true,
+            message: '좌표가 성공적으로 변경되었습니다.',
+            data: {
+                partnerCode,
+                latitude: lat,
+                longitude: lng
+            }
+        });
+    }
+    catch (error) {
+        console.error('좌표 변경 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '서버 오류가 발생했습니다.'
+        });
+    }
+};
+exports.updatePartnerCoordinates = updatePartnerCoordinates;
 //# sourceMappingURL=partner.controller.js.map

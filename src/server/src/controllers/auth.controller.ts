@@ -15,17 +15,10 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: '계정과 비밀번호를 입력해주세요.' })
     }
 
-    // 프로덕션 디버깅: 모든 사용자 계정 확인
-    console.log('🔍 로그인 시도:', { account, env: process.env.NODE_ENV })
-    const allUsers = await userRepository.find({ select: ['account', 'isActive'] })
-    console.log('🔍 등록된 사용자들:', allUsers)
-
     // 사용자 찾기
     const user = await userRepository.findOne({ 
       where: { account, isActive: true } 
     })
-    
-    console.log('🔍 찾은 사용자:', user ? { account: user.account, isActive: user.isActive } : null)
     
     if (!user) {
       return res.status(401).json({ message: '계정 또는 비밀번호가 올바르지 않습니다.' })

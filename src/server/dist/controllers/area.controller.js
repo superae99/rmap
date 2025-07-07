@@ -198,11 +198,6 @@ const getAreasWithSalesTerritory = async (req, res) => {
                 } : null
             };
         });
-        // 디버깅: 영역 상태 확인
-        // 처음 3개 영역의 담당자 상태 확인
-        formattedAreas.slice(0, 3).forEach((area, index) => {
-            const managerInfo = area.salesTerritory ? `담당자: ${area.salesTerritory.managerName}` : '담당자 없음';
-        });
         res.json(formattedAreas);
     }
     catch (error) {
