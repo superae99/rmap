@@ -247,7 +247,7 @@ const AreasPage = () => {
       console.log('🏢 AreasPage - API 호출 시작...')
       const [partnersResponse, areasData] = await Promise.all([
         partnerAPI.getPartners({
-          limit: 100000,
+          // limit 제거하여 전체 데이터 조회
           branchFilter: filters.branchFilter,
           officeFilter: filters.officeFilter,
           managerFilter: filters.managerFilter
